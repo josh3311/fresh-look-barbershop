@@ -12,6 +12,7 @@
     "seed:sql": "tsx scripts/seed.ts --sql"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",

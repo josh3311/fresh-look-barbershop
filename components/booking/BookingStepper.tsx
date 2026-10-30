@@ -7,6 +7,7 @@ import { categoriesFor, findService, rules, shop, staffFor, type Service, type S
 import { getDurationMinutes } from "@/lib/duration";
 import { t } from "@/lib/i18n";
 import { DEFAULT_LENGTH, LENGTH_OPTIONS, lengthSteps } from "@/lib/lengths";
+import { normalizePhone } from "@/lib/phone";
 import { estimatePrice, formatCents, type Estimate } from "@/lib/pricing";
 import { Avatar } from "@/components/Team";
 import { bilingual, FromPrice } from "@/components/ui";
@@ -257,8 +258,8 @@ export function BookingStepper({
             onSubmit={() => {
               const errs: Record<string, string> = {};
               if (!details.name.trim()) errs.name = t.book.required;
-              if (details.phone.replace(/\D/g, "").length < 10) errs.phone = t.book.errorPhone;
-              if (!/^\S+@\S+\.\S+$/.test(details.email)) errs.email = t.book.required;
+              if (!normalizePhone(details.phone)) errs.phone = t.book.errorPhone;
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim())) errs.email = t.book.errorEmail;
               setFieldErrors(errs);
               if (!Object.keys(errs).length) go(6);
             }}
