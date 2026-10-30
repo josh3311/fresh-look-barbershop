@@ -1,0 +1,1341 @@
+{
+  "_read_me": [
+    "Transcribed from the menus Aubin sent (men's Square screenshot + Beaudy_By_Olga flyers).",
+    "Prices are in CAD dollars. Store them as cents in the database (30 -> 3000).",
+    "duration_min = null means use the duration_rule in 'rules'.",
+    "Anything in 'flags' must be confirmed with Aubin before going live."
+  ],
+  "rules": {
+    "currency": "CAD",
+    "extra_length_price": 15,
+    "normal_length": "Armpit to mid-back",
+    "length_steps_after_normal": [
+      "Waist",
+      "Hip",
+      "Tailbone",
+      "Classic butt",
+      "Mid-thigh",
+      "Knee",
+      "Calf"
+    ],
+    "deposit": 0,
+    "payment": "Paid in the salon. No online payment.",
+    "duration_rule": "Owner said roughly 2-3 hours for braid/twist/loc styles. XMicro/Micro/XSmall/Small = 180 min; Smedium/Medium = 150 min; Large/XLarge/Jumbo and count-based sizes = 120 min.",
+    "length_rule": "CONFIRMED: each step past mid-back adds $15 (Waist +15, Hip +30, Tailbone +45, Classic butt +60, Mid-thigh +75, Knee +90, Calf +105)."
+  },
+  "men": [
+    {
+      "category_en": "Haircuts & Beard",
+      "category_fr": "Coupes & Barbe",
+      "services": [
+        {
+          "name_en": "Classic Haircut",
+          "name_fr": "Coupe Classique",
+          "price": 25,
+          "duration_min": 30,
+          "note": "From the shop flyer ($25 headline). Duration 30 min is a demo value."
+        },
+        {
+          "name_en": "Haircut & Beard Trim",
+          "name_fr": "Coupe Régulière & Barbe",
+          "price": 30,
+          "duration_min": 40
+        },
+        {
+          "name_en": "Kids",
+          "name_fr": "Enfants",
+          "price": 25,
+          "duration_min": 30
+        },
+        {
+          "name_en": "Beard",
+          "name_fr": "Barbe",
+          "price": 20,
+          "duration_min": 15
+        },
+        {
+          "name_en": "Outline",
+          "name_fr": "Contours",
+          "price": 20,
+          "duration_min": 15
+        }
+      ]
+    },
+    {
+      "category_en": "Braids, Twists & Locs",
+      "category_fr": "Tresses, Twists & Locs",
+      "services": [
+        {
+          "name": "Simple Cornrows",
+          "pricing": "by_count",
+          "variants": [
+            {
+              "size": "2-4 cornrows",
+              "price": 40
+            },
+            {
+              "size": "5-9 cornrows",
+              "price": 65
+            },
+            {
+              "size": "10-16 cornrows",
+              "price": 90
+            },
+            {
+              "size": "More",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "addons": [
+            {
+              "name": "Design",
+              "price": 20
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Stitch Cornrows",
+          "pricing": "by_count",
+          "variants": [
+            {
+              "size": "2-4 cornrows",
+              "price": 65
+            },
+            {
+              "size": "5-6 cornrows",
+              "price": 80
+            },
+            {
+              "size": "7-8 cornrows",
+              "price": 120
+            },
+            {
+              "size": "More",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "addons": [
+            {
+              "name": "Design",
+              "price": 15
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Barrel Twists",
+          "pricing": "by_count",
+          "variants": [
+            {
+              "size": "2-4 lines",
+              "price": 75
+            },
+            {
+              "size": "5-6 lines",
+              "price": 100
+            },
+            {
+              "size": "7-8 lines",
+              "price": 120
+            },
+            {
+              "size": "10-12 lines",
+              "price": 145
+            },
+            {
+              "size": "More",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Locs Re-twist",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 200
+            },
+            {
+              "size": "XSmall",
+              "price": 135
+            },
+            {
+              "size": "Small",
+              "price": 120
+            },
+            {
+              "size": "Smedium",
+              "price": 110
+            },
+            {
+              "size": "Medium",
+              "price": 100
+            },
+            {
+              "size": "Large",
+              "price": 85
+            }
+          ],
+          "addons": [
+            {
+              "name": "Styling",
+              "price": 25,
+              "from": true
+            }
+          ],
+          "duration_min": null
+        }
+      ]
+    }
+  ],
+  "women": [
+    {
+      "category_en": "Twists",
+      "category_fr": "Vanilles (Twists)",
+      "services": [
+        {
+          "name": "Twists (Natural Hair)",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 350
+            },
+            {
+              "size": "XSmall",
+              "price": 190
+            },
+            {
+              "size": "Small",
+              "price": 150
+            },
+            {
+              "size": "Smedium",
+              "price": 120
+            },
+            {
+              "size": "Medium",
+              "price": 95
+            },
+            {
+              "size": "Large",
+              "price": 80
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Passion Twists / Human Hair Twist",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 350
+            },
+            {
+              "size": "XSmall",
+              "price": 170
+            },
+            {
+              "size": "Small",
+              "price": 140
+            },
+            {
+              "size": "Smedium",
+              "price": 120
+            },
+            {
+              "size": "Medium",
+              "price": 100
+            },
+            {
+              "size": "Large",
+              "price": 90
+            },
+            {
+              "size": "XLarge",
+              "price": 85
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Fulani Passion Twists / Human Hair Twist",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 350
+            },
+            {
+              "size": "XSmall",
+              "price": 185
+            },
+            {
+              "size": "Small",
+              "price": 155
+            },
+            {
+              "size": "Smedium",
+              "price": 135
+            },
+            {
+              "size": "Medium",
+              "price": 125
+            },
+            {
+              "size": "Large",
+              "price": 100
+            },
+            {
+              "size": "XLarge",
+              "price": 85
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Senegalese Twists",
+          "variants": [
+            {
+              "size": "XMicro",
+              "price": 475
+            },
+            {
+              "size": "Micro",
+              "price": 375
+            },
+            {
+              "size": "XSmall",
+              "price": 225
+            },
+            {
+              "size": "Small",
+              "price": 190
+            },
+            {
+              "size": "Smedium",
+              "price": 160
+            },
+            {
+              "size": "Medium",
+              "price": 135
+            },
+            {
+              "size": "Large",
+              "price": 100
+            },
+            {
+              "size": "Jumbo",
+              "price": 85
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Marley Twists",
+          "variants": [
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 150
+            },
+            {
+              "size": "Medium",
+              "price": 135
+            },
+            {
+              "size": "Large",
+              "price": 125
+            },
+            {
+              "size": "Jumbo",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Short Fulani Marley Twists",
+          "variants": [
+            {
+              "size": "Small",
+              "price": 195
+            },
+            {
+              "size": "Smedium",
+              "price": 160
+            },
+            {
+              "size": "Medium",
+              "price": 145
+            },
+            {
+              "size": "Large",
+              "price": 125
+            },
+            {
+              "size": "Jumbo",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Short Boho Marley Twists",
+          "variants": [
+            {
+              "size": "Small",
+              "price": 200
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 150
+            },
+            {
+              "size": "Large",
+              "price": 130
+            },
+            {
+              "size": "Jumbo",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Criss Cross Marley Twists",
+          "variants": [
+            {
+              "size": "Small",
+              "price": 195
+            },
+            {
+              "size": "Smedium",
+              "price": 160
+            },
+            {
+              "size": "Medium",
+              "price": 140
+            },
+            {
+              "size": "Large",
+              "price": 125
+            },
+            {
+              "size": "Jumbo",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        }
+      ]
+    },
+    {
+      "category_en": "Locs",
+      "category_fr": "Locs",
+      "services": [
+        {
+          "name": "Soft Locs / Butterfly Crochet",
+          "variants": [
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 135
+            },
+            {
+              "size": "Large",
+              "price": 115
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Soft Locs Crochet with Curls",
+          "variants": [
+            {
+              "size": "Small",
+              "price": 250
+            },
+            {
+              "size": "Smedium",
+              "price": 175
+            },
+            {
+              "size": "Medium",
+              "price": 150
+            },
+            {
+              "size": "Large",
+              "price": 120
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curls",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        }
+      ]
+    },
+    {
+      "category_en": "Braids",
+      "category_fr": "Tresses",
+      "services": [
+        {
+          "name": "Knotless Braids",
+          "variants": [
+            {
+              "size": "XMicro",
+              "price": 450
+            },
+            {
+              "size": "Micro",
+              "price": 350
+            },
+            {
+              "size": "XSmall",
+              "price": 250
+            },
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 150
+            },
+            {
+              "size": "Medium",
+              "price": 130
+            },
+            {
+              "size": "Large",
+              "price": null,
+              "consult": true,
+              "note": "Price left blank on purpose. Show \"Ask in salon\"."
+            }
+          ],
+          "addons": [
+            {
+              "name": "Curled ends",
+              "price": 10
+            },
+            {
+              "name": "Beads at the ends",
+              "price": 20
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Knotless Bones Straight Braids",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 450
+            },
+            {
+              "size": "XSmall",
+              "price": 230
+            },
+            {
+              "size": "Small",
+              "price": 210
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 145
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Knotless Boho Braids (Style A)",
+          "flag": "Flyer has 4 styles all called 'Knotless Boho braids' with different prices. Need real names.",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 255
+            },
+            {
+              "size": "Small",
+              "price": 200
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 140
+            },
+            {
+              "size": "Large",
+              "price": 115
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curl",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Knotless Boho Braids (Style B)",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 350
+            },
+            {
+              "size": "XSmall",
+              "price": 225
+            },
+            {
+              "size": "Small",
+              "price": 190
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 140
+            },
+            {
+              "size": "Large",
+              "price": 115
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curl",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Knotless Boho Braids (Style C)",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 275
+            },
+            {
+              "size": "Small",
+              "price": 220
+            },
+            {
+              "size": "Smedium",
+              "price": 175
+            },
+            {
+              "size": "Medium",
+              "price": 145
+            },
+            {
+              "size": "Large",
+              "price": 120
+            },
+            {
+              "size": "XLarge",
+              "price": 100
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curl",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Knotless Boho Braids (Style D)",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 250
+            },
+            {
+              "size": "Small",
+              "price": 195
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 140
+            },
+            {
+              "size": "Large",
+              "price": 120
+            },
+            {
+              "size": "XLarge",
+              "price": 100
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curl",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Bob Boho Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 195
+            },
+            {
+              "size": "Small",
+              "price": 165
+            },
+            {
+              "size": "Smedium",
+              "price": 140
+            },
+            {
+              "size": "Medium",
+              "price": 120
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curls",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Fulani Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 245
+            },
+            {
+              "size": "Small",
+              "price": 190
+            },
+            {
+              "size": "Smedium",
+              "price": 155
+            },
+            {
+              "size": "Medium",
+              "price": 130
+            },
+            {
+              "size": "Large",
+              "price": 115
+            }
+          ],
+          "addons": [
+            {
+              "name": "Curled ends",
+              "price": 15
+            },
+            {
+              "name": "Beads at the end",
+              "price": 20
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Tribal Fulani Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 195
+            },
+            {
+              "size": "Small",
+              "price": 175
+            },
+            {
+              "size": "Smedium",
+              "price": 145
+            },
+            {
+              "size": "Medium",
+              "price": 130
+            },
+            {
+              "size": "Large",
+              "price": 115
+            },
+            {
+              "size": "XLarge",
+              "price": 95
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Fulani Boho Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 270
+            },
+            {
+              "size": "Small",
+              "price": 220
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 145
+            },
+            {
+              "size": "Large",
+              "price": 120
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Bob Boho Fulani",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 225
+            },
+            {
+              "size": "Small",
+              "price": 170
+            },
+            {
+              "size": "Smedium",
+              "price": 140
+            },
+            {
+              "size": "Medium",
+              "price": 120
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curl",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Stitch Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 200
+            },
+            {
+              "size": "Small",
+              "price": 160
+            },
+            {
+              "size": "Smedium",
+              "price": 135
+            },
+            {
+              "size": "Medium",
+              "price": 115
+            },
+            {
+              "size": "Large",
+              "price": 95
+            },
+            {
+              "size": "XLarge",
+              "price": 85
+            }
+          ],
+          "addons": [
+            {
+              "name": "Styling",
+              "price": 15
+            },
+            {
+              "name": "Adding curls",
+              "price": 15
+            },
+            {
+              "name": "With beads",
+              "price": 15
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "One Corner Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 250
+            },
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 150
+            },
+            {
+              "size": "Medium",
+              "price": 130
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "addons": [
+            {
+              "name": "With beads",
+              "price": 20
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Alicia Keys Braids with Curls",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 200
+            },
+            {
+              "size": "Small",
+              "price": 170
+            },
+            {
+              "size": "Smedium",
+              "price": 140
+            },
+            {
+              "size": "Medium",
+              "price": 125
+            },
+            {
+              "size": "Large",
+              "price": 100
+            },
+            {
+              "size": "XLarge",
+              "price": 90
+            }
+          ],
+          "addons": [
+            {
+              "name": "Full curl",
+              "price": null,
+              "consult": true
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Ponytail Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 240
+            },
+            {
+              "size": "Small",
+              "price": 190
+            },
+            {
+              "size": "Smedium",
+              "price": 160
+            },
+            {
+              "size": "Medium",
+              "price": 140
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "addons": [
+            {
+              "name": "Styling",
+              "price": 15
+            },
+            {
+              "name": "Curl ends",
+              "price": 15
+            },
+            {
+              "name": "Beads at the ends",
+              "price": 20
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Tyla Braids",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 130
+            },
+            {
+              "size": "Small",
+              "price": 115
+            },
+            {
+              "size": "Medium",
+              "price": 95
+            },
+            {
+              "size": "Large",
+              "price": 85
+            },
+            {
+              "size": "XLarge",
+              "price": 65
+            }
+          ],
+          "addons": [
+            {
+              "name": "Sewing",
+              "price": 35
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Jayda Wayda (Half Wig)",
+          "variants": [
+            {
+              "size": "XSmall",
+              "price": 130
+            },
+            {
+              "size": "Small",
+              "price": 115
+            },
+            {
+              "size": "Medium",
+              "price": 95
+            },
+            {
+              "size": "Large",
+              "price": 85
+            },
+            {
+              "size": "XLarge",
+              "price": 65
+            }
+          ],
+          "addons": [
+            {
+              "name": "Sewing",
+              "price": 35
+            },
+            {
+              "name": "Crochet",
+              "price": 35
+            }
+          ],
+          "duration_min": null
+        }
+      ]
+    },
+    {
+      "category_en": "French Curls",
+      "category_fr": "French Curls",
+      "services": [
+        {
+          "name": "French Curl Braids",
+          "variants": [
+            {
+              "size": "XMicro",
+              "price": 360
+            },
+            {
+              "size": "Micro",
+              "price": 285
+            },
+            {
+              "size": "XSmall",
+              "price": 250
+            },
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 155
+            },
+            {
+              "size": "Medium",
+              "price": 130
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Boho French Curl",
+          "variants": [
+            {
+              "size": "XMicro",
+              "price": 380
+            },
+            {
+              "size": "Micro",
+              "price": 295
+            },
+            {
+              "size": "XSmall",
+              "price": 225
+            },
+            {
+              "size": "Small",
+              "price": 190
+            },
+            {
+              "size": "Smedium",
+              "price": 165
+            },
+            {
+              "size": "Medium",
+              "price": 135
+            },
+            {
+              "size": "Large",
+              "price": 110
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Fulani French Curl Braids (Style A)",
+          "flag": "Flyer has 4 styles all called 'Fulani French Curl Braids' with different prices. Need real names.",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 295
+            },
+            {
+              "size": "XSmall",
+              "price": 250
+            },
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 160
+            },
+            {
+              "size": "Medium",
+              "price": 135
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Fulani French Curl Braids (Style B)",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 300
+            },
+            {
+              "size": "XSmall",
+              "price": 250
+            },
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 155
+            },
+            {
+              "size": "Medium",
+              "price": 130
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Fulani French Curl Braids (Style C)",
+          "variants": [
+            {
+              "size": "XMicro",
+              "price": 350
+            },
+            {
+              "size": "Micro",
+              "price": 275
+            },
+            {
+              "size": "XSmall",
+              "price": 200
+            },
+            {
+              "size": "Small",
+              "price": 170
+            },
+            {
+              "size": "Smedium",
+              "price": 135
+            },
+            {
+              "size": "Medium",
+              "price": 115
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        },
+        {
+          "name": "Fulani French Curl Braids (Style D)",
+          "variants": [
+            {
+              "size": "Micro",
+              "price": 300
+            },
+            {
+              "size": "XSmall",
+              "price": 235
+            },
+            {
+              "size": "Small",
+              "price": 185
+            },
+            {
+              "size": "Smedium",
+              "price": 145
+            },
+            {
+              "size": "Medium",
+              "price": 120
+            },
+            {
+              "size": "Large",
+              "price": 100
+            }
+          ],
+          "duration_min": null
+        }
+      ]
+    }
+  ],
+  "removed": [
+    "Locs Installation (crossed out on the flyer, do NOT add it)"
+  ],
+  "size_guide_notes": [
+    "XMicro is not available for Cornrows or Fulani.",
+    "Large / XLarge Cornrows and Fulani = 2 to 4 strands."
+  ],
+  "flags": [
+    "Shop hours still unknown (demo hours used).",
+    "Staff sides for A-D are a demo split (A,B men / C,D women).",
+    "Knotless Braids Large price left blank on purpose.",
+    "4 'Knotless Boho Braids' and 4 'Fulani French Curl Braids' kept as Style A-D on purpose."
+  ],
+  "shop": {
+    "name": "Fresh Look Barbershop",
+    "tagline_fr": "Votre style, notre priorité !",
+    "address": "478 Rideau St, Unité B, Ottawa, ON K1N 5Z4",
+    "phone": "(418) 255-2571",
+    "email": "freshlook.Ottawa@gmail.com",
+    "hours": "TODO (demo: Mon-Sat 10:00-19:00, Sun closed)"
+  },
+  "staff_demo": [
+    {
+      "name": "Barber A",
+      "side": "men"
+    },
+    {
+      "name": "Barber B",
+      "side": "men"
+    },
+    {
+      "name": "Barber C",
+      "side": "women"
+    },
+    {
+      "name": "Barber D",
+      "side": "women"
+    }
+  ]
+}

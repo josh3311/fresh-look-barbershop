@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* Design tokens (spec 3.1). Dark mode swaps paper <-> ink. */
+:root {
+  --ink: #111111;
+  --paper: #f7f5f0;
+  --gold: #b8935a;
+  /* Gold for small text: plain gold is too light on paper (contrast < 4.5:1). */
+  --gold-text: #7c5e2f;
+  --oak: #d8c3a5;
+  --oak-soft: #efe5d6;
+  --rose: #c99a9a;
+  --rose-text: #8e5555;
+  --line: #e4dfd6;
+  --muted: #5c574f;
+  --surface: #ffffff;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f7f5f0;
+    --paper: #111111;
+    --gold-text: #d2b07a;
+    --oak: #3a3128;
+    --oak-soft: #221d18;
+    --rose-text: #dcb0b0;
+    --line: #2e2a25;
+    --muted: #b3ab9f;
+    --surface: #1a1816;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-gold: var(--gold);
+  --color-gold-text: var(--gold-text);
+  --color-oak: var(--oak);
+  --color-oak-soft: var(--oak-soft);
+  --color-rose: var(--rose);
+  --color-rose-text: var(--rose-text);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  /* Fixed colors for text on gold buttons / photo overlays (never swap). */
+  --color-onyx: #111111;
+  --color-ivory: #f7f5f0;
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Thin gold rule, like the line under the scissors in the logo. */
+.gold-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--gold);
+}
+.gold-rule::before,
+.gold-rule::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
