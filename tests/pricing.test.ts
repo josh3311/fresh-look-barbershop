@@ -63,6 +63,14 @@ describe("catalog (spec 2, 10.5b, 10.10)", () => {
     }
   });
 
+  it("length option: women's long styles only, not Bob/Short, not men", () => {
+    const noLength = ["bob-boho-braids", "bob-boho-fulani", "short-fulani-marley-twists", "short-boho-marley-twists"];
+    for (const s of services) {
+      expect(s.lengthBased, s.slug).toBe(s.side === "women" && !noLength.includes(s.slug));
+    }
+    expect(services.find((s) => s.slug === "knotless-braids")!.lengthBased).toBe(true);
+  });
+
   it("has 9 men's services and 33 women's styles", () => {
     expect(services.filter((s) => s.side === "men")).toHaveLength(9);
     expect(services.filter((s) => s.side === "women")).toHaveLength(33);

@@ -109,6 +109,15 @@ const STYLE_PHOTOS = new Set<string>([]);
 
 const REMOVED = /locs installation/i;
 
+// Extra length (+$15 per step) applies to women's long styles only (confirmed by Josh, Oct 30).
+// Bob / Short styles have no length option; neither do men's braids, twists or re-twist.
+const NO_LENGTH = new Set([
+  "bob-boho-braids",
+  "bob-boho-fulani",
+  "short-fulani-marley-twists",
+  "short-boho-marley-twists",
+]);
+
 function buildSide(side: Side, raw: RawCategory[]): Category[] {
   return raw
     .map((cat) => {
@@ -161,9 +170,7 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
             nameFr,
             imageUrl: STYLE_PHOTOS.has(slug) ? `/images/${side}/${slug}.jpg` : null,
             baseDurationMinutes: s.duration_min ?? null,
-            // Demo decision (TODO Aubin): length extra applies to women's styles only;
-            // men's cornrows / barrel twists / re-twist sit on the head.
-            lengthBased: side === "women",
+            lengthBased: side === "women" && !NO_LENGTH.has(slug),
             variants,
             addons,
             sortOrder: i,
