@@ -35,7 +35,7 @@ function Door({
     <article className="group overflow-hidden rounded-2xl border border-line bg-surface">
       <Link href={href} className="relative block aspect-[4/3] overflow-hidden">
         {image}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
         <h3 className="absolute bottom-4 left-5 font-serif text-4xl text-ivory">{title}</h3>
       </Link>
       <div className="p-5">
@@ -128,9 +128,14 @@ export default function Home() {
             examples={womenExamples}
             accent="rose"
             image={
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-rose/70 via-oak to-gold/60 transition duration-700 group-hover:scale-105">
-                <span className="font-serif text-2xl italic text-onyx/70">{t.placeholder.womenDoor}</span>
-              </div>
+              <Image
+                src="/images/women/women-boho-curls.jpg"
+                alt="Boho knotless braids with caramel curly ends"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover transition duration-700 group-hover:scale-105"
+                style={{ objectPosition: "center 30%" }}
+              />
             }
           />
         </div>
@@ -140,7 +145,10 @@ export default function Home() {
       <section className="bg-oak-soft py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4">
           <SectionTitle title={t.portfolio.heading} sub={t.portfolio.sub} />
-          <Portfolio photos={[...menPhotos, ...womenPhotos]} />
+          <h3 className="mb-4 font-serif text-2xl">{t.portfolio.men}</h3>
+          <Portfolio photos={menPhotos} />
+          <h3 className="mb-4 mt-12 font-serif text-2xl">{t.portfolio.women}</h3>
+          <Portfolio photos={womenPhotos} columns={4} />
         </div>
       </section>
 

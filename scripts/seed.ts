@@ -29,7 +29,17 @@ async function main() {
   }
   const db = createClient(url, key, { auth: { persistSession: false } });
 
+  // A staff member's schedule is all-or-nothing: in build mode, only add hours for
+  // people who have none yet (row ids change when hours are edited or migrated).
+  if (buildMode) {
+    const { data, error } = await db.from("working_hours").select("staff_id");
+    if (error) throw new Error(`working_hours: ${error.message}`);
+    const scheduled = new Set((data ?? []).map((r) => r.staff_id));
+    rows.working_hours = rows.working_hours.filter((r) => !scheduled.has(r.staff_id));
+  }
+
   for (const table of SEED_TABLES) {
+    if (!rows[table].length) continue;
     const { error } = await db.from(table).upsert(rows[table] as Record<string, unknown>[], {
       onConflict: primaryKey(table).replace(" ", ""),
       ignoreDuplicates: buildMode,

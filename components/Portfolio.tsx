@@ -7,9 +7,20 @@ import { t } from "@/lib/i18n";
 export interface Photo {
   src: string;
   alt: string;
+  /** CSS object-position for the square-ish tile crop (default "center"). */
+  position?: string;
 }
 
-export function Portfolio({ photos, strip = false }: { photos: Photo[]; strip?: boolean }) {
+export function Portfolio({
+  photos,
+  strip = false,
+  columns = 3,
+}: {
+  photos: Photo[];
+  strip?: boolean;
+  /** Desktop columns; phones always show 2. */
+  columns?: 3 | 4;
+}) {
   const [open, setOpen] = useState<number | null>(null);
 
   useEffect(() => {
@@ -33,7 +44,7 @@ export function Portfolio({ photos, strip = false }: { photos: Photo[]; strip?: 
         className={
           strip
             ? "no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4"
-            : "grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3"
+            : `grid grid-cols-2 gap-2 sm:gap-3 ${columns === 4 ? "sm:grid-cols-4" : "sm:grid-cols-3"}`
         }
       >
         {photos.map((p, i) => (
@@ -50,6 +61,7 @@ export function Portfolio({ photos, strip = false }: { photos: Photo[]; strip?: 
                 fill
                 sizes="(max-width: 640px) 50vw, 33vw"
                 className="object-cover transition duration-500 group-hover:scale-105"
+                style={p.position ? { objectPosition: p.position } : undefined}
               />
             </button>
           </li>

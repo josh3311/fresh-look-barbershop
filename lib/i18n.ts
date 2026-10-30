@@ -30,6 +30,8 @@ const en = {
   portfolio: {
     heading: "Portfolio",
     sub: "Fresh work from the chair.",
+    men: "Men / Hommes",
+    women: "Women / Femmes",
     close: "Close photo",
     open: "Open photo",
   },
@@ -52,6 +54,8 @@ const en = {
     phone: "Phone",
     email: "Email",
     closed: "Closed",
+    hoursSummary: "Mon–Sun, 10:00–20:00",
+    directions: "Get directions",
     mapTitle: "Map to Fresh Look",
   },
   days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
@@ -154,9 +158,6 @@ const en = {
     title: "Staff area",
     soon: "The staff dashboard is coming in the next version. Bookings are already saved safely.",
   },
-  placeholder: {
-    womenDoor: "Braids · Twists · Locs",
-  },
 };
 
 export type Dict = typeof en;
@@ -173,7 +174,7 @@ const fr: Dict = {
     seeAll: "Tout voir",
     from: "à partir de",
   },
-  portfolio: { heading: "Portfolio", sub: "Le travail du fauteuil.", close: "Fermer la photo", open: "Ouvrir la photo" },
+  portfolio: { heading: "Portfolio", sub: "Le travail du fauteuil.", men: "Men / Hommes", women: "Women / Femmes", close: "Fermer la photo", open: "Ouvrir la photo" },
   team: {
     heading: "L'équipe",
     sub: "Choisissez votre barbier ou coiffeuse, ou la première personne libre.",
@@ -186,7 +187,7 @@ const fr: Dict = {
     heading: "À propos",
     text: "Fresh Look est un salon de barbier et de tresses sur la rue Rideau. Des coupes nettes, de belles tresses et un endroit détendu pour attendre. Réservez en ligne ou passez nous voir.",
   },
-  visit: { heading: "Nous trouver", address: "Adresse", hours: "Heures", phone: "Téléphone", email: "Courriel", closed: "Fermé", mapTitle: "Carte vers Fresh Look" },
+  visit: { heading: "Nous trouver", address: "Adresse", hours: "Heures", phone: "Téléphone", email: "Courriel", closed: "Fermé", hoursSummary: "Lun–Dim, 10h–20h", directions: "Itinéraire", mapTitle: "Carte vers Fresh Look" },
   days: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
   footer: { rights: "© Fresh Look", staffLogin: "Connexion équipe" },
   men: {
@@ -281,7 +282,6 @@ const fr: Dict = {
     notFound: "Réservation introuvable.",
   },
   staff: { title: "Espace équipe", soon: "Le tableau de bord arrive dans la prochaine version. Les réservations sont déjà enregistrées." },
-  placeholder: { womenDoor: "Tresses · Twists · Locs" },
 };
 
 export const dict = { en, fr };

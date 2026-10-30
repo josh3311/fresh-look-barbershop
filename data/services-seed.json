@@ -1307,7 +1307,6 @@
     "Large / XLarge Cornrows and Fulani = 2 to 4 strands."
   ],
   "flags": [
-    "Shop hours still unknown (demo hours used).",
     "Staff sides for A-D are a demo split (A,B men / C,D women).",
     "Knotless Braids Large price left blank on purpose.",
     "4 'Knotless Boho Braids' and 4 'Fulani French Curl Braids' kept as Style A-D on purpose."
@@ -1315,10 +1314,10 @@
   "shop": {
     "name": "Fresh Look Barbershop",
     "tagline_fr": "Votre style, notre priorité !",
-    "address": "478 Rideau St, Unité B, Ottawa, ON K1N 5Z4",
+    "address": "478 Rideau St, Ottawa, ON K1N 5Z4",
     "phone": "(418) 255-2571",
     "email": "freshlook.Ottawa@gmail.com",
-    "hours": "TODO (demo: Mon-Sat 10:00-19:00, Sun closed)"
+    "hours": "Mon-Sun 10:00-20:00 (confirmed Oct 30)"
   },
   "staff_demo": [
     {

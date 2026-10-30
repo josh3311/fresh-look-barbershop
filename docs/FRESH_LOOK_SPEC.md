@@ -24,7 +24,8 @@ Aubin showed a Square booking page as a sample (it splits services into sections
 |---|---|
 | Shop name | Fresh Look Barbershop |
 | Tagline | "Votre style, notre priorité !" |
-| Address | 478 Rideau St, Unité B, Ottawa, ON K1N 5Z4 |
+| Address | 478 Rideau St, Ottawa, ON K1N 5Z4 (no unit number: Uber could not find it) |
+| Opening hours | Every day (Mon–Sun) 10:00–20:00 (confirmed Oct 30) |
 | Phone | (418) 255-2571 (tap-to-call link: `tel:+14182552571`) |
 | Salon email | freshlook.Ottawa@gmail.com |
 | Deposit | $0. Pay in the salon. |
@@ -39,7 +40,6 @@ Aubin showed a Square booking page as a sample (it splits services into sections
 
 | Thing | Placeholder to use |
 |---|---|
-| Opening hours | Mon–Sat 10:00–19:00, Sun closed (DEMO ONLY) |
 | Which side Barbers A–D work | A, B = men, C, D = women (DEMO ONLY, owner can change in dashboard) |
 | Photos for most styles | neutral placeholder box (more photos come later) |
 | Instagram / TikTok | hide the icons until we have links |
@@ -100,7 +100,7 @@ Think of the website like a house. The **Home** page is the front hall. From the
 4. **Portfolio**: a grid of photos (the 3 men's haircut photos + women's style photos). Tap a photo → it opens big.
 5. **Team**: round photos, name, and "Men" or "Women" tag. Button under each: "Book with [name]".
 6. **About**: 2–3 short sentences. Use: "Fresh Look is a barbershop and braiding salon on Rideau Street. Clean cuts, beautiful braids, and a relaxed place to wait. Book online or walk in." (Josh/Aubin can change it.)
-7. **Visit us**: address (478 Rideau St, Unité B), hours, phone (418) 255-2571 as a tap-to-call link, email, and an embedded Google Map.
+7. **Visit us**: address (478 Rideau St), "Get directions" link, hours (Mon–Sun, 10:00–20:00), phone (418) 255-2571 as a tap-to-call link, email, and an embedded Google Map.
 8. **Footer**: logo, address, email, "© Fresh Look", small link "Staff login".
 
 ✅ **You know it worked when:** on a phone, you can go from the Home page to the booking form in **one tap**.
@@ -132,7 +132,7 @@ Think of the website like a house. The **Home** page is the front hall. From the
 
 Booking is like signing up for a slot on the school's swing.
 - The swing (a **staff member**) can only hold one kid at a time.
-- Recess (the **working hours**) is from 10:00 to 19:00.
+- Recess (the **working hours**) is from 10:00 to 20:00, every day.
 - Each turn takes a certain time (the **service duration**).
 - If Sam has the swing from 2:00 to 2:40, nobody else can take it from 2:00 to 2:40.
 
@@ -184,7 +184,7 @@ Special cases:
 - MUST NOT allow a booking more than **60 days** ahead (setting `max_days_ahead`).
 - MUST NOT show times outside the person's working hours or during their time off.
 - MUST NOT ask for any payment or card.
-- The service must **fit completely** before closing. A 40-min cut cannot start at 18:30 if the barber ends at 19:00.
+- The service must **fit completely** before closing. A 30-min cut cannot start at 19:45 if the barber ends at 20:00 (19:30 is the last start; a 15-min beard can start at 19:45).
 - Time slots start every **15 minutes**.
 - If two people click the same time at the same moment, only one wins. The other sees: "Sorry, this time was just booked. Please pick another." (The database enforces this, not the page. See 6.3.)
 
@@ -383,7 +383,7 @@ If an image is missing, show a neutral `oak` box with the service name. Never br
 
 1. Book a men's haircut on a phone → it appears on that barber's dashboard.
 2. Try to book the same barber at the same time from a second browser → the second gets the "just booked" message.
-3. A 40-minute service is never offered at 18:30 when the barber ends at 19:00.
+3. A 30-minute Classic Haircut is offered at 19:30 but never at 19:45 when the day ends at 20:00. Sunday shows times, and Sunday Nov 1, 2026 (DST change) still starts at 10:00.
 4. Knotless Small + Hip + beads shows **$235** estimated.
 5. A "to discuss" option shows "Price to discuss in the salon" and still books. Knotless Large shows "Ask in salon".
 5b. Cornrows, Barrel Twists and Locs Re-twist appear on the **Men** page only. A Small knotless braid offers no slot that would end after closing (180 min).
@@ -411,7 +411,7 @@ If an image is missing, show a neutral `oak` box with the service name. Never br
 
 ## 12. Still open (placeholders are fine for the demo)
 
-1. **Shop hours** (demo: Mon–Sat 10:00–19:00).
+1. ~~Shop hours~~ Done: every day 10:00–20:00 (Oct 30).
 2. Which side Barbers A–D work (demo: A, B men / C, D women).
 3. **Language**: French first, English first, or a switch?
 4. **Cancellation**: how late can a customer cancel online (e.g. up to 24h before)?

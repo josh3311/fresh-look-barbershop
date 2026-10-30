@@ -1,8 +1,5 @@
-import { DEMO_HOURS, shop } from "@/lib/catalog";
+import { shop } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
-
-// Monday first, Sunday last.
-const ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export function VisitUs() {
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(shop.address)}&output=embed`;
@@ -12,22 +9,20 @@ export function VisitUs() {
         <div>
           <dt className="text-xs uppercase tracking-wider text-muted">{t.visit.address}</dt>
           <dd className="mt-1 font-serif text-lg">{shop.address}</dd>
+          <dd className="mt-2">
+            <a
+              href={shop.directionsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm font-medium text-gold-text underline-offset-4 hover:underline"
+            >
+              {t.visit.directions} →
+            </a>
+          </dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wider text-muted">{t.visit.hours}</dt>
-          <dd className="mt-1">
-            <ul className="text-sm">
-              {ORDER.map((d) => {
-                const h = DEMO_HOURS.find((x) => x.weekday === d);
-                return (
-                  <li key={d} className="flex justify-between border-b border-line py-1 last:border-0">
-                    <span>{t.days[d]}</span>
-                    <span className={h ? "" : "text-muted"}>{h ? `${h.start} – ${h.end}` : t.visit.closed}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </dd>
+          <dd className="mt-1 font-serif text-lg">{t.visit.hoursSummary}</dd>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
           <div>

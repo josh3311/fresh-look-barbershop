@@ -1,7 +1,7 @@
 // Turns the catalog (from services-seed.json) into database rows.
 // Used by scripts/seed.ts. Ids are deterministic, so re-seeding is an upsert.
 import seed from "@/data/services-seed.json";
-import { categories, DEMO_HOURS, services, shop, staff, rules } from "@/lib/catalog";
+import { categories, OPENING_HOURS, services, shop, staff, rules } from "@/lib/catalog";
 import { stableId } from "@/lib/ids";
 
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
@@ -9,7 +9,7 @@ const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 export function buildSeedRows() {
   const opening_hours = Object.fromEntries(
     DAYS.map((d, i) => {
-      const h = DEMO_HOURS.find((x) => x.weekday === i);
+      const h = OPENING_HOURS.find((x) => x.weekday === i);
       return [d, h ? [h.start, h.end] : null];
     }),
   );
@@ -80,9 +80,9 @@ export function buildSeedRows() {
       is_active: true,
       sort_order: p.sortOrder,
     })),
-    // Demo: Mon-Sat 10:00-19:00 for everyone (TODO Aubin).
+    // Everyone works the opening hours (Mon-Sun 10:00-20:00).
     working_hours: staff.flatMap((p) =>
-      DEMO_HOURS.map((h) => ({
+      OPENING_HOURS.map((h) => ({
         id: stableId(`wh:${p.slug}:${h.weekday}`),
         staff_id: p.id,
         weekday: h.weekday,

@@ -213,6 +213,7 @@ export const shop = {
   tagline: seed.shop.tagline_fr,
   address: seed.shop.address,
   phone: seed.shop.phone,
+  directionsHref: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(seed.shop.address)}`,
   phoneHref: `tel:+1${seed.shop.phone.replace(/\D/g, "")}`,
   email: seed.shop.email,
   timezone: "America/Toronto",
@@ -224,9 +225,9 @@ export const rules = {
   sizeGuideNotes: seed.size_guide_notes,
 };
 
-/** TODO Aubin: demo hours. weekday 0 = Sunday. */
-export const DEMO_HOURS: { weekday: number; start: string; end: string }[] = [1, 2, 3, 4, 5, 6].map(
-  (weekday) => ({ weekday, start: "10:00", end: "19:00" }),
+/** Open every day 10:00-20:00 (confirmed Oct 30). weekday 0 = Sunday. */
+export const OPENING_HOURS: { weekday: number; start: string; end: string }[] = [0, 1, 2, 3, 4, 5, 6].map(
+  (weekday) => ({ weekday, start: "10:00", end: "20:00" }),
 );
 
 export function categoriesFor(side: Side) {
