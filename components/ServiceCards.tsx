@@ -23,7 +23,11 @@ export function CutCard({ service, badge }: { service: Service; badge?: boolean 
         )}
         <h3 className="font-serif text-lg leading-snug">{bilingual(service)}</h3>
         <p className="mt-1 text-sm text-muted">
-          {getDurationMinutes({ service, variant: v })} {t.service.min} · <FromPrice service={service} />
+          {/* "about 35 min": barber cuts only (owner decision, CR2 A2); style cards show no time. */}
+          {service.team === "barber" && (
+            <>{t.service.aboutMin.replace("{n}", String(getDurationMinutes({ service, variant: v })))} · </>
+          )}
+          <FromPrice service={service} />
         </p>
       </div>
       <Link

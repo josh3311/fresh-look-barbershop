@@ -9,11 +9,14 @@ vi.mock("@/lib/server/booking-context", async (importOriginal) => {
   return {
     ...real,
     loadSelection: vi.fn(async () => ({
-      settings: { timezone: "America/Toronto", slot_interval_minutes: 15, min_notice_minutes: 60, max_days_ahead: 60, extra_length_price_cents: 1500 },
-      service: { id: "svc", side: "men", name_en: "Classic Haircut", base_duration_minutes: 30, length_based: false, is_active: true },
-      variant: { id: "var", service_id: "svc", label: "Standard", price_cents: 2500, is_consult: false, duration_minutes: null },
+      // Change Request #2 (A1/A2, Oct 31): Classic is $30 and blocks 35 min; the server reads
+      // barber_slot_minutes / stylist_slot_minutes (was slot_interval_minutes 15, $25, 30 min).
+      settings: { timezone: "America/Toronto", barber_slot_minutes: 5, stylist_slot_minutes: 60, min_notice_minutes: 60, max_days_ahead: 60, extra_length_price_cents: 1500 },
+      service: { id: "svc", side: "men", team: "barber", name_en: "Classic Haircut", base_duration_minutes: 35, length_based: false, is_active: true },
+      variant: { id: "var", service_id: "svc", label: "Standard", price_cents: 3000, is_consult: false, duration_minutes: null },
       addons: [],
-      durationMinutes: 30,
+      durationMinutes: 35,
+      team: "barber",
     })),
     loadEligibleStaff: vi.fn(async () => [{ id: "staff-a", name: "Barber A", is_active: true, sort_order: 0 }]),
     computeAvailability: vi.fn(async () => ({ "2026-11-06": { "staff-a": [start] } })),

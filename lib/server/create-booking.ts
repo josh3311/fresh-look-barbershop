@@ -49,7 +49,8 @@ export async function createBooking(
     if (steps === null) throw new HttpError(400, "Unknown length");
     const lengthLabel = sel.service.length_based ? (b.lengthLabel ?? "Normal") : null;
 
-    // Price: recalculated from database rows, never taken from the page.
+    // Price: recalculated from database rows, never taken from the page. Any price field
+    // in the body (price_estimate_cents, priceCents...) is dropped by BookingBody.
     const estimate = estimatePrice({
       variant: { priceCents: sel.variant.price_cents, isConsult: sel.variant.is_consult },
       addons: sel.addons.map((a) => ({ priceCents: a.price_cents, isFrom: a.is_from, isConsult: a.is_consult })),
@@ -70,13 +71,15 @@ export async function createBooking(
     // Availability: the start time must be a free slot for that person (or anyone).
     const startsAt = new Date(b.startsAt);
     const date = formatInTimeZone(startsAt, tz, "yyyy-MM-dd");
-    const people = await loadEligibleStaff(db, b.serviceId, b.staffId);
+    // Only people on the service's team (CR2 A4): "any" never crosses teams.
+    const people = await loadEligibleStaff(db, sel.service, b.staffId);
     const avail = await computeAvailability(db, {
       staffIds: people.map((p) => p.id),
       fromDate: date,
       days: 1,
       durationMinutes: sel.durationMinutes,
       settings: sel.settings,
+      team: sel.team,
     });
     const candidates = people.filter((p) =>
       (avail[date]?.[p.id] ?? []).some((s) => s.getTime() === startsAt.getTime()),

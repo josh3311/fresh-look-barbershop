@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { getFreeStartTimes, weekdayOf } from "@/lib/availability";
-import { getDurationMinutes, sizeRuleMinutes } from "@/lib/duration";
+import { getDurationMinutes } from "@/lib/duration";
 import { OPENING_HOURS, services } from "@/lib/catalog";
 import { buildSeedRows } from "@/lib/seed-rows";
 
@@ -16,17 +16,19 @@ const base = {
   busy: [],
   now: fromZonedTime("2026-11-01T09:00:00", TZ),
   minNoticeMinutes: 60,
-  slotIntervalMinutes: 15,
+  // Change Request #2 (A2, Oct 31): barber starts every 5 min (was 15 for everyone).
+  slotIntervalMinutes: 5,
   timeZone: TZ,
 };
 
 describe("getFreeStartTimes (spec 5.4 / 6.6)", () => {
-  it("a 30-min Classic Haircut is offered at 19:30 but not 19:45 (closes 20:00)", () => {
-    const slots = labels(getFreeStartTimes({ ...base, durationMinutes: 30 }));
-    expect(slots).toContain("19:30");
-    expect(slots).not.toContain("19:45");
+  // Change Request #2 (A2): Classic blocks 35 min (was 30) on a 5-min grid (was 15).
+  it("a 35-min Classic Haircut is offered at 19:25 but not 19:30 (closes 20:00)", () => {
+    const slots = labels(getFreeStartTimes({ ...base, durationMinutes: 35 }));
+    expect(slots).toContain("19:25");
+    expect(slots).not.toContain("19:30");
     expect(slots[0]).toBe("10:00");
-    expect(slots).toContain("10:15");
+    expect(slots[1]).toBe("10:05");
   });
 
   it("a 15-min Beard is offered at 19:45 (ends exactly at 20:00), nothing at 20:00 or later", () => {
@@ -35,10 +37,12 @@ describe("getFreeStartTimes (spec 5.4 / 6.6)", () => {
     expect(slots.filter((s) => s >= "20:00")).toEqual([]);
   });
 
-  it("a 40-min service is never offered at 19:30 when the day ends at 20:00", () => {
+  // Change Request #2 (A2): 5-min grid, so the last 40-min start is 19:20 (was 19:15).
+  it("a 40-min service is never offered after 19:20 when the day ends at 20:00", () => {
     const slots = labels(getFreeStartTimes({ ...base, durationMinutes: 40 }));
+    expect(slots).not.toContain("19:25");
     expect(slots).not.toContain("19:30");
-    expect(slots.at(-1)).toBe("19:15");
+    expect(slots.at(-1)).toBe("19:20");
   });
 
   // Change Request #2 (A3, Oct 31): every stylist service blocks 60 min (was 180 for Small).
@@ -46,19 +50,21 @@ describe("getFreeStartTimes (spec 5.4 / 6.6)", () => {
     const knotless = services.find((s) => s.slug === "knotless-braids")!;
     const minutes = getDurationMinutes({ service: knotless, variant: knotless.variants.find((v) => v.label === "Small")! });
     expect(minutes).toBe(60);
-    const slots = labels(getFreeStartTimes({ ...base, durationMinutes: minutes }));
+    // Stylists start on the hour (CR2 A3, stylist_slot_minutes = 60).
+    const slots = labels(getFreeStartTimes({ ...base, durationMinutes: minutes, slotIntervalMinutes: 60 }));
     expect(slots.at(-1)).toBe("19:00");
   });
 
+  // Change Request #2 (A2): 5-min grid, so the edges move to 13:20 / 14:40 (were 13:15 / 14:45).
   it("skips times that overlap an existing booking", () => {
     const slots = labels(
       getFreeStartTimes({ ...base, durationMinutes: 40, busy: [{ start: at("14:00"), end: at("14:40") }] }),
     );
-    expect(slots).toContain("13:15"); // ends 13:55
-    expect(slots).not.toContain("13:30"); // would end 14:10
+    expect(slots).toContain("13:20"); // ends 14:00
+    expect(slots).not.toContain("13:25"); // would end 14:05
     expect(slots).not.toContain("14:00");
-    expect(slots).not.toContain("14:15");
-    expect(slots).toContain("14:45");
+    expect(slots).not.toContain("14:35");
+    expect(slots).toContain("14:40");
   });
 
   it("removes time off", () => {
@@ -70,9 +76,11 @@ describe("getFreeStartTimes (spec 5.4 / 6.6)", () => {
     expect(slots).toContain("13:00");
   });
 
+  // Change Request #2 (A2): 5-min grid, so the first start after 14:05 is 14:05 (was 14:15).
   it("never shows past times or times within the 60-minute notice", () => {
     const slots = labels(getFreeStartTimes({ ...base, durationMinutes: 30, now: at("13:05") }));
-    expect(slots[0]).toBe("14:15");
+    expect(slots[0]).toBe("14:05");
+    expect(slots).not.toContain("14:00");
   });
 
   it("no working hours = no times (e.g. a day off)", () => {
@@ -115,19 +123,20 @@ describe("getDurationMinutes (spec 6.4)", () => {
     expect(getDurationMinutes({ service: cut, variant: cut.variants[0] })).toBe(45);
   });
 
-  it("size rule: 3h / 2h30 / 2h", () => {
-    expect(["XMicro", "Micro", "XSmall", "Small"].map(sizeRuleMinutes)).toEqual([180, 180, 180, 180]);
-    expect(["Smedium", "Medium"].map(sizeRuleMinutes)).toEqual([150, 150]);
-    expect(["Large", "XLarge", "Jumbo", "2-4 cornrows", "5-6 lines", "More"].map(sizeRuleMinutes)).toEqual([
-      120, 120, 120, 120, 120, 120,
-    ]);
+  // Change Request #2 (A3, Oct 31): the 3h / 2h30 / 2h size rule is gone; every stylist
+  // size blocks 60 min (was XMicro-Small 180, Smedium/Medium 150, others 120).
+  it("no size rule any more: every knotless size blocks 60 min", () => {
+    const knotless = services.find((s) => s.slug === "knotless-braids")!;
+    expect(knotless.variants.map((v) => getDurationMinutes({ service: knotless, variant: v }))).toEqual(
+      knotless.variants.map(() => 60),
+    );
   });
 
   it("adds add-on extra minutes", () => {
     expect(
       getDurationMinutes({
         service: { baseDurationMinutes: 30 },
-        variant: { label: "Standard", durationMinutes: null },
+        variant: { durationMinutes: null },
         addons: [{ extraMinutes: 15 }],
       }),
     ).toBe(45);

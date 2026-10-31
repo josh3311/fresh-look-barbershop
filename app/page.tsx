@@ -23,6 +23,7 @@ function Door({
   examples,
   accent,
   image,
+  solidLabel = false,
 }: {
   href: string;
   title: string;
@@ -30,13 +31,27 @@ function Door({
   examples: Service[];
   accent: "gold" | "rose";
   image: React.ReactNode;
+  /**
+   * Change Request #2 (A8), Women card only: the label is a solid black box with white
+   * text (21:1, same in light and dark mode). Only the label changes: the photo and the
+   * dark gradient stay (CR1 5.4). Without it the card renders exactly as before (Men card).
+   */
+  solidLabel?: boolean;
 }) {
   return (
     <article className="group overflow-hidden rounded-2xl border border-line bg-surface">
       <Link href={href} className="relative block aspect-[4/3] overflow-hidden">
         {image}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-        <h3 className="absolute bottom-4 left-5 font-serif text-4xl text-ivory">{title}</h3>
+        <h3
+          className={
+            solidLabel
+              ? "absolute bottom-4 left-5 rounded-lg bg-black px-4 py-2 font-serif text-4xl text-white"
+              : "absolute bottom-4 left-5 font-serif text-4xl text-ivory"
+          }
+        >
+          {title}
+        </h3>
       </Link>
       <div className="p-5">
         <p className="text-muted">{text}</p>
@@ -127,6 +142,7 @@ export default function Home() {
             text={t.doors.womenText}
             examples={womenExamples}
             accent="rose"
+            solidLabel
             image={
               <Image
                 src="/images/women/women-boho-curls.jpg"

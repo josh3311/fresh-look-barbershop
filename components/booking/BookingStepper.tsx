@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
-import { categoriesFor, findService, rules, shop, staffFor, type Service, type Side } from "@/lib/catalog";
+import { categoriesFor, findService, rules, shop, type Service, type Side } from "@/lib/catalog";
 import { getDurationMinutes } from "@/lib/duration";
 import { t } from "@/lib/i18n";
 import { DEFAULT_LENGTH, LENGTH_OPTIONS, lengthSteps } from "@/lib/lengths";
@@ -11,18 +11,12 @@ import { normalizePhone } from "@/lib/phone";
 import { estimatePrice, formatCents, type Estimate } from "@/lib/pricing";
 import { Avatar } from "@/components/Team";
 import { bilingual, FromPrice } from "@/components/ui";
+import { resolveStaffChoice, staffChoicesFor } from "@/components/booking/staff-choices";
+import { DateChip, SlotArea, type Day } from "@/components/booking/TimeSlots";
 
 const TZ = shop.timezone;
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
-interface Slot {
-  start: string;
-  label: string;
-}
-interface Day {
-  date: string;
-  slots: Slot[];
-}
 interface Details {
   name: string;
   phone: string;
@@ -50,7 +44,10 @@ export function BookingStepper({
   );
   const [lengthLabel, setLengthLabel] = useState(DEFAULT_LENGTH);
   const [addonIds, setAddonIds] = useState<string[]>([]);
-  const [staffId, setStaffId] = useState(initialStaffId);
+  // A preselected person (?staff=) who does not do this service falls back to "Anyone available".
+  const [staffId, setStaffId] = useState(
+    initialService ? resolveStaffChoice(initialService, initialStaffId) : initialStaffId,
+  );
   const [slotStart, setSlotStart] = useState<string | null>(null);
   const [details, setDetails] = useState<Details>({ name: "", phone: "", email: "", notes: "", website: "" });
   const [step, setStep] = useState<Step>(
@@ -64,8 +61,10 @@ export function BookingStepper({
   const service = serviceId ? findService(serviceId) : undefined;
   const variant = service?.variants.find((v) => v.id === variantId);
   const addons = service?.addons.filter((a) => addonIds.includes(a.id)) ?? [];
-  const people = side ? staffFor(side) : [];
-  const person = people.find((p) => p.id === staffId);
+  // Only the service's team (CR2 A4): cornrows from the Men side show the stylists.
+  const people = service ? staffChoicesFor(service) : [];
+  const chosenStaffId = service ? resolveStaffChoice(service, staffId) : staffId;
+  const person = people.find((p) => p.id === chosenStaffId);
 
   const estimate: Estimate | null =
     service && variant
@@ -90,7 +89,6 @@ export function BookingStepper({
       setVariantId(null);
       setAddonIds([]);
       setSlotStart(null);
-      if (!staffFor(s).some((p) => p.id === staffId)) setStaffId("any");
     }
     setSide(s);
     go(2);
@@ -98,6 +96,7 @@ export function BookingStepper({
 
   function chooseService(s: Service) {
     setServiceId(s.id);
+    setStaffId((cur) => resolveStaffChoice(s, cur));
     setAddonIds([]);
     setLengthLabel(DEFAULT_LENGTH);
     setSlotStart(null);
@@ -122,7 +121,7 @@ export function BookingStepper({
           variantId: variant.id,
           addonIds,
           lengthLabel: service.lengthBased ? lengthLabel : null,
-          staffId,
+          staffId: chosenStaffId,
           startsAt: slotStart,
           ...details,
         }),
@@ -203,11 +202,11 @@ export function BookingStepper({
         </StepShell>
       )}
 
-      {step === 3 && side && (
+      {step === 3 && service && (
         <StepShell title={t.book.choosePerson} onBack={() => go(2)}>
           <div className="grid gap-3 sm:grid-cols-2">
             <PersonCard
-              selected={staffId === "any"}
+              selected={chosenStaffId === "any"}
               onClick={() => {
                 setStaffId("any");
                 setSlotStart(null);
@@ -220,14 +219,14 @@ export function BookingStepper({
             {people.map((p) => (
               <PersonCard
                 key={p.id}
-                selected={staffId === p.id}
+                selected={chosenStaffId === p.id}
                 onClick={() => {
                   setStaffId(p.id);
                   setSlotStart(null);
                   go(4);
                 }}
                 title={p.name}
-                sub={p.side === "women" ? t.team.women : t.team.men}
+                sub={p.team === "stylist" ? t.book.teamStylist : t.book.teamBarber}
                 avatar={<Avatar person={p} size={56} />}
               />
             ))}
@@ -238,8 +237,8 @@ export function BookingStepper({
       {step === 4 && service && variant && (
         <StepShell title={t.book.chooseTime} onBack={() => go(3)}>
           <TimePicker
-            key={`${service.id}-${variant.id}-${addonIds.join(",")}-${staffId}-${reloadKey}`}
-            query={{ serviceId: service.id, variantId: variant.id, addonIds, staffId }}
+            key={`${service.id}-${variant.id}-${addonIds.join(",")}-${chosenStaffId}-${reloadKey}`}
+            query={{ serviceId: service.id, variantId: variant.id, addonIds, staffId: chosenStaffId }}
             selected={slotStart}
             onPick={(s) => {
               setSlotStart(s);
@@ -420,7 +419,8 @@ function ServicePicker({ side, selectedId, onPick }: { side: Side; selectedId: s
                   <span className="min-w-0">
                     <span className="block font-medium">{bilingual(s)}</span>
                     <span className="block text-sm text-muted">
-                      {s.kind === "cut" && `${getDurationMinutes({ service: s, variant: s.variants[0] })} min · `}
+                      {s.team === "barber" &&
+                        `${t.service.aboutMin.replace("{n}", String(getDurationMinutes({ service: s, variant: s.variants[0] })))} · `}
                       <FromPrice service={s} />
                     </span>
                   </span>
@@ -535,6 +535,7 @@ function PersonCard(props: { selected: boolean; onClick: () => void; title: stri
     <button
       type="button"
       onClick={props.onClick}
+      aria-pressed={props.selected}
       className={`flex items-center gap-4 rounded-xl border bg-surface p-4 text-left transition hover:border-gold ${
         props.selected ? "border-gold ring-1 ring-gold" : "border-line"
       }`}
@@ -599,52 +600,13 @@ function TimePicker({
   return (
     <div>
       <div className="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-2" role="listbox" aria-label={t.book.date}>
-        {days.map((d) => {
-          const [y, m, dd] = d.date.split("-").map(Number);
-          const local = new Date(y, m - 1, dd);
-          const empty = d.slots.length === 0;
-          const on = d.date === date;
-          return (
-            <button
-              key={d.date}
-              type="button"
-              role="option"
-              aria-selected={on}
-              disabled={empty}
-              onClick={() => setDate(d.date)}
-              className={`w-[calc((100%-3rem)/7)] min-w-14 shrink-0 snap-start rounded-xl border py-2.5 text-center transition ${
-                on ? "border-gold bg-gold text-onyx" : empty ? "border-line opacity-35" : "border-line bg-surface hover:border-gold"
-              }`}
-            >
-              <span className="block text-[11px] uppercase tracking-wide">
-                {local.toLocaleDateString("en-CA", { weekday: "short" })}
-              </span>
-              <span className="block font-serif text-xl">{dd}</span>
-              <span className="block text-[11px]">{local.toLocaleDateString("en-CA", { month: "short" })}</span>
-            </button>
-          );
-        })}
+        {days.map((d) => (
+          <DateChip key={d.date} day={d} selected={d.date === date} onSelect={() => setDate(d.date)} />
+        ))}
       </div>
 
       <div className="mt-5">
-        {current && current.slots.length ? (
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-            {current.slots.map((s) => (
-              <button
-                key={s.start}
-                type="button"
-                onClick={() => onPick(s.start)}
-                className={`rounded-lg border py-2.5 text-sm font-medium transition ${
-                  selected === s.start ? "border-gold bg-gold text-onyx" : "border-line bg-surface hover:border-gold"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="py-6 text-center text-muted">{t.book.noTimes}</p>
-        )}
+        <SlotArea day={current} selected={selected} onPick={onPick} />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
+import { summarizeDay } from "@/lib/availability";
 import { getAdminClient } from "@/lib/server/supabase";
 import {
   computeAvailability,
@@ -28,6 +28,8 @@ const Query = z.object({
 
 // GET /api/availability?serviceId=&variantId=&addonIds=&staffId=&date=&days=
 // Returns free start times only. Never booking details.
+// days[]: { date, slots: [{ start, label }], notWorking }. notWorking = the chosen person
+// (or, for "any", everyone on the service's team) has no working hours that day.
 export async function GET(req: NextRequest) {
   const parsed = Query.safeParse(Object.fromEntries(req.nextUrl.searchParams));
   if (!parsed.success) return NextResponse.json({ error: "Invalid query" }, { status: 400 });
@@ -36,7 +38,7 @@ export async function GET(req: NextRequest) {
   try {
     const db = getAdminClient();
     const sel = await loadSelection(db, q);
-    const people = await loadEligibleStaff(db, q.serviceId, q.staffId);
+    const people = await loadEligibleStaff(db, sel.service, q.staffId);
     const tz = sel.settings.timezone;
     const byDate = await computeAvailability(db, {
       staffIds: people.map((p) => p.id),
@@ -44,17 +46,11 @@ export async function GET(req: NextRequest) {
       days: q.days,
       durationMinutes: sel.durationMinutes,
       settings: sel.settings,
+      team: sel.team,
     });
 
     // For "anyone": a time shows if at least one person is free.
-    const days = Object.entries(byDate).map(([date, perStaff]) => {
-      const times = new Map<number, Date>();
-      for (const list of Object.values(perStaff)) for (const t of list) times.set(t.getTime(), t);
-      const slots = [...times.values()]
-        .sort((a, b) => a.getTime() - b.getTime())
-        .map((t) => ({ start: t.toISOString(), label: formatInTimeZone(t, tz, "HH:mm") }));
-      return { date, slots };
-    });
+    const days = Object.entries(byDate).map(([date, perStaff]) => summarizeDay(date, perStaff, tz));
 
     return NextResponse.json(
       { timezone: tz, durationMinutes: sel.durationMinutes, days },
