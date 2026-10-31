@@ -6,6 +6,13 @@ import { slugify, stableId } from "@/lib/ids";
 
 export type Side = "men" | "women";
 export type StaffSide = Side | "both";
+/**
+ * Who does a service (Change Request #2, Oct 31). "barber" = Barber A, B (haircuts);
+ * "stylist" = Barber C, D (every braid / twist / loc / French curl / cornrow service,
+ * on both sides). `side` only says which page shows a service or a person.
+ */
+export type Team = "barber" | "stylist";
+export const TEAMS: readonly Team[] = ["barber", "stylist"];
 
 export interface Variant {
   id: string;
@@ -31,6 +38,8 @@ export interface Service {
   slug: string;
   categoryId: string;
   side: Side;
+  /** Which team does it (from the category's "team" in services-seed.json). */
+  team: Team;
   /** "cut" = fixed price + fixed time (men's cuts). "style" = sizes, add-ons, maybe length. */
   kind: "cut" | "style";
   nameEn: string;
@@ -48,6 +57,7 @@ export interface Category {
   id: string;
   slug: string;
   side: Side;
+  team: Team;
   nameEn: string;
   nameFr: string;
   sortOrder: number;
@@ -58,7 +68,10 @@ export interface StaffMember {
   id: string;
   slug: string;
   name: string;
+  /** Which page shows the person (Men / Women). */
   side: StaffSide;
+  /** Which services they do. Emails are private: they are never in the catalog (it reaches the browser). */
+  team: Team;
   photoUrl: string | null;
   sortOrder: number;
 }
@@ -87,7 +100,13 @@ interface RawService {
 interface RawCategory {
   category_en: string;
   category_fr: string;
+  team: string;
   services: RawService[];
+}
+
+function toTeam(value: string, where: string): Team {
+  if (value === "barber" || value === "stylist") return value;
+  throw new Error(`services-seed.json: ${where} has team "${value}" (expected "barber" or "stylist")`);
 }
 
 const toCents = (dollars: number | null | undefined) =>
@@ -123,6 +142,7 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
     .map((cat) => {
       const catSlug = slugify(cat.category_en);
       const categoryId = stableId(`category:${side}:${catSlug}`);
+      const team = toTeam(cat.team, `category "${cat.category_en}"`);
       const services: Service[] = cat.services
         .filter((s) => !REMOVED.test(s.name ?? s.name_en ?? ""))
         .map((s, i) => {
@@ -165,6 +185,7 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
             slug,
             categoryId,
             side,
+            team,
             kind: isCut ? "cut" : "style",
             nameEn,
             nameFr,
@@ -180,6 +201,7 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
         id: categoryId,
         slug: catSlug,
         side,
+        team,
         nameEn: cat.category_en,
         nameFr: cat.category_fr,
         sortOrder: CATEGORY_ORDER[catSlug] ?? 99,
@@ -203,6 +225,7 @@ export const staff: StaffMember[] = seed.staff_demo.map((s, i) => {
     slug,
     name: s.name,
     side: s.side as StaffSide,
+    team: toTeam(s.team, `staff "${s.name}"`),
     photoUrl: null,
     sortOrder: i,
   };
@@ -236,6 +259,11 @@ export function categoriesFor(side: Side) {
 
 export function staffFor(side: Side) {
   return staff.filter((s) => s.side === side || s.side === "both");
+}
+
+/** The people who do a team's services ("Anyone available" picks only from these). */
+export function staffForTeam(team: Team) {
+  return staff.filter((s) => s.team === team);
 }
 
 export function findService(id: string) {

@@ -2,7 +2,7 @@
   "_read_me": [
     "Transcribed from the menus Aubin sent (men's Square screenshot + Beaudy_By_Olga flyers).",
     "Prices are in CAD dollars. Store them as cents in the database (30 -> 3000).",
-    "duration_min = null means use the duration_rule in 'rules'.",
+    "duration_min is the booking block in minutes (CR2, Oct 31): barber cuts 35/45/30/15/15, every stylist service 60. 'team' on each category says who does it: 'barber' (Barber A, B) or 'stylist' (Barber C, D).",
     "Anything in 'flags' must be confirmed with Aubin before going live."
   ],
   "rules": {
@@ -20,26 +20,28 @@
     ],
     "deposit": 0,
     "payment": "Paid in the salon. No online payment.",
-    "duration_rule": "Owner said roughly 2-3 hours for braid/twist/loc styles. XMicro/Micro/XSmall/Small = 180 min; Smedium/Medium = 150 min; Large/XLarge/Jumbo and count-based sizes = 120 min.",
+    "duration_rule": "CONFIRMED by Aubin (Oct 31, Change Request #2): every stylist service (braids, twists, locs, French curls, cornrows, both sides) blocks 60 min, whatever the size; replaces the old 180/150/120 min size rule. Barber services use their own duration_min (Classic 35, Haircut & Beard Trim 45, Kids 30, Beard 15, Outline 15). TODO Aubin: real per-style durations can replace the 60 min block later (set duration_min per service).",
     "length_rule": "CONFIRMED: each step past mid-back adds $15 (Waist +15, Hip +30, Tailbone +45, Classic butt +60, Mid-thigh +75, Knee +90, Calf +105)."
   },
   "men": [
     {
       "category_en": "Haircuts & Beard",
       "category_fr": "Coupes & Barbe",
+      "team": "barber",
       "services": [
         {
           "name_en": "Classic Haircut",
           "name_fr": "Coupe Classique",
-          "price": 25,
-          "duration_min": 30,
-          "note": "From the shop flyer ($25 headline). Duration 30 min is a demo value."
+          "price": 30,
+          "duration_min": 35,
+          "note": "Price $30 and 35 min block confirmed by Aubin (Change Request #2, Oct 31). Was $25 / 30 min."
         },
         {
           "name_en": "Haircut & Beard Trim",
           "name_fr": "Coupe Régulière & Barbe",
-          "price": 30,
-          "duration_min": 40
+          "price": 35,
+          "duration_min": 45,
+          "note": "Price $35 and 45 min block confirmed by Aubin (Change Request #2, Oct 31). Was $30 / 40 min."
         },
         {
           "name_en": "Kids",
@@ -64,6 +66,7 @@
     {
       "category_en": "Braids, Twists & Locs",
       "category_fr": "Tresses, Twists & Locs",
+      "team": "stylist",
       "services": [
         {
           "name": "Simple Cornrows",
@@ -93,7 +96,7 @@
               "price": 20
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Stitch Cornrows",
@@ -123,7 +126,7 @@
               "price": 15
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Barrel Twists",
@@ -151,7 +154,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Locs Re-twist",
@@ -188,7 +191,7 @@
               "from": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         }
       ]
     }
@@ -197,6 +200,7 @@
     {
       "category_en": "Twists",
       "category_fr": "Vanilles (Twists)",
+      "team": "stylist",
       "services": [
         {
           "name": "Twists (Natural Hair)",
@@ -226,7 +230,7 @@
               "price": 80
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Passion Twists / Human Hair Twist",
@@ -260,7 +264,7 @@
               "price": 85
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Fulani Passion Twists / Human Hair Twist",
@@ -294,7 +298,7 @@
               "price": 85
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Senegalese Twists",
@@ -332,7 +336,7 @@
               "price": 85
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Marley Twists",
@@ -358,7 +362,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Short Fulani Marley Twists",
@@ -384,7 +388,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Short Boho Marley Twists",
@@ -410,7 +414,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Criss Cross Marley Twists",
@@ -436,13 +440,14 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         }
       ]
     },
     {
       "category_en": "Locs",
       "category_fr": "Locs",
+      "team": "stylist",
       "services": [
         {
           "name": "Soft Locs / Butterfly Crochet",
@@ -464,7 +469,7 @@
               "price": 115
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Soft Locs Crochet with Curls",
@@ -493,13 +498,14 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         }
       ]
     },
     {
       "category_en": "Braids",
       "category_fr": "Tresses",
+      "team": "stylist",
       "services": [
         {
           "name": "Knotless Braids",
@@ -545,7 +551,7 @@
               "price": 20
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Knotless Bones Straight Braids",
@@ -571,7 +577,7 @@
               "price": 145
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Knotless Boho Braids (Style A)",
@@ -605,7 +611,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Knotless Boho Braids (Style B)",
@@ -642,7 +648,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Knotless Boho Braids (Style C)",
@@ -679,7 +685,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Knotless Boho Braids (Style D)",
@@ -716,7 +722,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Bob Boho Braids",
@@ -749,7 +755,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Fulani Braids",
@@ -785,7 +791,7 @@
               "price": 20
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Tribal Fulani Braids",
@@ -815,7 +821,7 @@
               "price": 95
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Fulani Boho Braids",
@@ -841,7 +847,7 @@
               "price": 120
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Bob Boho Fulani",
@@ -874,7 +880,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Stitch Braids",
@@ -918,7 +924,7 @@
               "price": 15
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "One Corner Braids",
@@ -950,7 +956,7 @@
               "price": 20
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Alicia Keys Braids with Curls",
@@ -987,7 +993,7 @@
               "consult": true
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Ponytail Braids",
@@ -1027,7 +1033,7 @@
               "price": 20
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Tyla Braids",
@@ -1059,7 +1065,7 @@
               "price": 35
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Jayda Wayda (Half Wig)",
@@ -1095,13 +1101,14 @@
               "price": 35
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         }
       ]
     },
     {
       "category_en": "French Curls",
       "category_fr": "French Curls",
+      "team": "stylist",
       "services": [
         {
           "name": "French Curl Braids",
@@ -1135,7 +1142,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Boho French Curl",
@@ -1169,7 +1176,7 @@
               "price": 110
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Fulani French Curl Braids (Style A)",
@@ -1200,7 +1207,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Fulani French Curl Braids (Style B)",
@@ -1230,7 +1237,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Fulani French Curl Braids (Style C)",
@@ -1264,7 +1271,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         },
         {
           "name": "Fulani French Curl Braids (Style D)",
@@ -1294,7 +1301,7 @@
               "price": 100
             }
           ],
-          "duration_min": null
+          "duration_min": 60
         }
       ]
     }
@@ -1307,7 +1314,10 @@
     "Large / XLarge Cornrows and Fulani = 2 to 4 strands."
   ],
   "flags": [
-    "Staff sides for A-D are a demo split (A,B men / C,D women).",
+    "Staff names stay Barber A-D until Aubin sends real names (do not rename). Real staff emails are set in the database only, never in this file (public repo).",
+    "Teams (Oct 31): Barber A, B = barbers (5 haircut services); Barber C, D = stylists (every braid/twist/loc/French curl/cornrow service, both sides). 'side' only says which page shows the person.",
+    "Stylist 60 min block (Oct 31): a long style (2-3 h) still blocks only 1 hour. Aubin knows his team; confirm with him.",
+    "Kids: keep 30 min and $25? (open item for Aubin)",
     "Knotless Braids Large price left blank on purpose.",
     "4 'Knotless Boho Braids' and 4 'Fulani French Curl Braids' kept as Style A-D on purpose."
   ],
@@ -1322,19 +1332,23 @@
   "staff_demo": [
     {
       "name": "Barber A",
-      "side": "men"
+      "side": "men",
+      "team": "barber"
     },
     {
       "name": "Barber B",
-      "side": "men"
+      "side": "men",
+      "team": "barber"
     },
     {
       "name": "Barber C",
-      "side": "women"
+      "side": "women",
+      "team": "stylist"
     },
     {
       "name": "Barber D",
-      "side": "women"
+      "side": "women",
+      "team": "stylist"
     }
   ]
 }

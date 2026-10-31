@@ -1,10 +1,32 @@
 // Turns the catalog (from services-seed.json) into database rows.
 // Used by scripts/seed.ts. Ids are deterministic, so re-seeding is an upsert.
+// Server/seed side only: never import this from app/ or components/ (it holds the
+// placeholder staff emails, which must not reach the browser bundle).
 import seed from "@/data/services-seed.json";
 import { categories, OPENING_HOURS, services, shop, staff, rules } from "@/lib/catalog";
 import { stableId } from "@/lib/ids";
 
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+/**
+ * Placeholder staff emails (Change Request #2). `.invalid` can never receive mail.
+ * TODO Aubin: real names and emails are coming. Set the REAL emails in the database
+ * only (Supabase SQL editor: `update public.staff set email = '...' where name = 'Barber A';`).
+ * NEVER commit a real email here: this repo is public. The seed only fills an email
+ * that is still empty, so it never overwrites a real one.
+ */
+export const PLACEHOLDER_STAFF_EMAILS: Record<string, string> = {
+  "barber-a": "barber.a@example.invalid",
+  "barber-b": "barber.b@example.invalid",
+  "barber-c": "barber.c@example.invalid",
+  "barber-d": "barber.d@example.invalid",
+};
+
+function placeholderEmail(slug: string): string {
+  const email = PLACEHOLDER_STAFF_EMAILS[slug];
+  if (!email) throw new Error(`No placeholder email for staff "${slug}"`);
+  return email;
+}
 
 export function buildSeedRows() {
   const opening_hours = Object.fromEntries(
@@ -24,6 +46,9 @@ export function buildSeedRows() {
         phone: shop.phone,
         timezone: shop.timezone,
         slot_interval_minutes: 15,
+        // Change Request #2: barbers start every 5 min, stylists on the hour.
+        barber_slot_minutes: 5,
+        stylist_slot_minutes: 60,
         min_notice_minutes: 60,
         max_days_ahead: 60,
         extra_length_price_cents: rules.extraLengthCents,
@@ -41,6 +66,7 @@ export function buildSeedRows() {
       id: s.id,
       category_id: s.categoryId,
       side: s.side,
+      team: s.team,
       slug: s.slug,
       name_en: s.nameEn,
       name_fr: s.nameFr,
@@ -76,6 +102,8 @@ export function buildSeedRows() {
       id: p.id,
       name: p.name,
       side: p.side,
+      team: p.team,
+      email: placeholderEmail(p.slug),
       role: "staff",
       is_active: true,
       sort_order: p.sortOrder,
@@ -90,11 +118,10 @@ export function buildSeedRows() {
         end_time: h.end,
       })),
     ),
-    // Each person does every service on their side.
+    // Each person does every service of their team (barbers: the 5 cuts; stylists:
+    // every braid/twist/loc service on both sides). Never across teams.
     staff_services: staff.flatMap((p) =>
-      services
-        .filter((s) => p.side === "both" || p.side === s.side)
-        .map((s) => ({ staff_id: p.id, service_id: s.id })),
+      services.filter((s) => s.team === p.team).map((s) => ({ staff_id: p.id, service_id: s.id })),
     ),
   };
 }
@@ -142,7 +169,14 @@ export function toSql(rows: SeedRows): string {
     const cols = Object.keys(list[0]);
     const pk = PK[table];
     const pkCols = pk.split(", ");
-    const updates = cols.filter((c) => !pkCols.includes(c)).map((c) => `${c} = excluded.${c}`);
+    // A staff email is only filled while empty: never overwrite a real one set in the database.
+    const updates = cols
+      .filter((c) => !pkCols.includes(c))
+      .map((c) =>
+        table === "staff" && c === "email"
+          ? `email = coalesce(public.staff.email, excluded.email)`
+          : `${c} = excluded.${c}`,
+      );
     parts.push(
       `insert into public.${table} (${cols.join(", ")}) values\n` +
         list.map((r) => `  (${cols.map((c) => sqlValue(r[c])).join(", ")})`).join(",\n") +

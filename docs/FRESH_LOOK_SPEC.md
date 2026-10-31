@@ -31,8 +31,9 @@ Aubin showed a Square booking page as a sample (it splits services into sections
 | Deposit | $0. Pay in the salon. |
 | Currency | CAD |
 | Time zone | America/Toronto |
-| Staff | 4 people: **Barber A, Barber B** (Men side) and **Barber C, Barber D** (Women side). No real names yet. |
-| Men's services | 5 cuts (incl. Classic Haircut $25 from the shop flyer) + 4 braid/twist/loc styles (see `services-seed.json`) |
+| Staff | 4 people: **Barber A, Barber B** (Men page, **barbers**) and **Barber C, Barber D** (Women page, **hairstylists**). No real names yet (do not rename). |
+| Teams (Oct 31) | **Barbers** (A, B) do the 5 haircut services. **Stylists** (C, D) do every braid / twist / loc / French curl / cornrow service, on **both** sides (see 6.4a). |
+| Men's services | 5 cuts (Classic Haircut **$30**, Haircut & Beard Trim **$35**, Kids $25, Beard $20, Outline $20) + 4 braid/twist/loc styles (see `services-seed.json`) |
 | Women's services | 33 styles from the Beaudy_By_Olga menus (see `services-seed.json`) |
 | Removed | Locs Installation (crossed out on the flyer — never add it) |
 
@@ -40,7 +41,8 @@ Aubin showed a Square booking page as a sample (it splits services into sections
 
 | Thing | Placeholder to use |
 |---|---|
-| Which side Barbers A–D work | A, B = men, C, D = women (DEMO ONLY, owner can change in dashboard) |
+| Real names of Barbers A–D | Keep "Barber A … D" until Aubin sends names |
+| Staff emails (for the "new booking" email) | Placeholders `barber.a@example.invalid` … in the database only. Real emails are set in the Supabase SQL editor, **never in the repo** (it is public). |
 | Photos for most styles | neutral placeholder box (more photos come later) |
 | Instagram / TikTok | hide the icons until we have links |
 
@@ -108,10 +110,10 @@ Think of the website like a house. The **Home** page is the front hall. From the
 ### 4.2 Men page `/men`
 1. Title: "Men / Hommes".
 2. Two tabs: **Cuts / Coupes** and **Braids, Twists & Locs / Tresses, Twists & Locs**.
-3. **Cuts** tab: service cards like the Square sample: name (English / French), time (e.g. "40 min"), price ("$30"), and a **Book** button. Classic Haircut ($25) goes first, with a gold "From $25" badge like the shop flyer.
+3. **Cuts** tab: service cards like the Square sample: name (English / French), time (e.g. "about 35 min"), price ("$30"), and a **Book** button. Classic Haircut ($30) goes first, with a gold "From $30" badge like the shop flyer.
 4. **Braids, Twists & Locs** tab: Simple Cornrows, Stitch Cornrows, Barrel Twists, Locs Re-twist. Same card style as the women's styles (photo, "from $X", tap to see the price table and add-ons).
 5. Portfolio strip: men's haircut photos.
-6. Barbers: only staff whose side is `men` or `both`.
+6. Barbers: only staff whose side is `men` or `both`. (The page shows people by **side**; booking a braid / twist / loc service from this page still offers only the **stylists**, see 6.4a.)
 
 ### 4.3 Women page `/women`
 1. Title: "Women / Femmes".
@@ -145,11 +147,11 @@ Booking is like signing up for a slot on the school's swing.
 - Women: pick the style, then pick the **size**, then pick the **length**, then tick any **add-ons**.
 - A small box at the bottom always shows: **"Estimated price: $X"**.
 
-**Step 3 — Pick the person.** Cards with photo and name. The first card is **"Anyone available"**. Only show people who do this service.
+**Step 3 — Pick the person.** Cards with photo and name. The first card is **"Anyone available"**. Only show people who do this service (the service's **team**: barbers for haircuts, stylists for every braid / twist / loc style, even from the Men side). "Anyone available" picks only from that team.
 
 **Step 4 — Pick the day and time.**
 - A row of the next 14 days (scroll to see up to 60 days).
-- Under it: the free times as buttons (10:00, 10:15, 10:30…).
+- Under it: the free times as buttons (barbers every 5 minutes: 10:00, 10:05, 10:10…; stylists on the hour: 10:00, 11:00…).
 - Days with no free time are greyed out.
 - If the customer chose "Anyone available", show a time if **at least one** person is free.
 
@@ -184,8 +186,8 @@ Special cases:
 - MUST NOT allow a booking more than **60 days** ahead (setting `max_days_ahead`).
 - MUST NOT show times outside the person's working hours or during their time off.
 - MUST NOT ask for any payment or card.
-- The service must **fit completely** before closing. A 30-min cut cannot start at 19:45 if the barber ends at 20:00 (19:30 is the last start; a 15-min beard can start at 19:45).
-- Time slots start every **15 minutes**.
+- The service must **fit completely** before closing. A 35-min Classic Haircut cannot start after 19:25 if the barber ends at 20:00; a 15-min beard can start at 19:45; a 60-min stylist service starts at 19:00 at the latest.
+- Start times (Change Request #2): **barbers every 5 minutes** (`settings.barber_slot_minutes` = 5: Barber A booked at 10:00 for a Classic means the next free start is 10:35), **stylists on the hour** (`settings.stylist_slot_minutes` = 60). The old `slot_interval_minutes` (15) stays in the table for now.
 - If two people click the same time at the same moment, only one wins. The other sees: "Sorry, this time was just booked. Please pick another." (The database enforces this, not the page. See 6.3.)
 
 ---
@@ -217,16 +219,17 @@ Hosting and the Supabase project stay on **Josh's accounts** until the site is p
 All money is stored in **cents** (`$30` → `3000`). All times are stored as `timestamptz`.
 
 **`settings`** (one row only)
-`shop_name, address, email, phone, timezone ('America/Toronto'), slot_interval_minutes (15), min_notice_minutes (60), max_days_ahead (60), extra_length_price_cents (1500), opening_hours (jsonb)`
+`shop_name, address, email, phone, timezone ('America/Toronto'), slot_interval_minutes (15, old), barber_slot_minutes (5), stylist_slot_minutes (60), min_notice_minutes (60), max_days_ahead (60), extra_length_price_cents (1500), opening_hours (jsonb)`
 
 **`staff`** — the barbers and stylists
-`id, name, photo_url, bio, side ('men' | 'women' | 'both'), role ('owner' | 'staff'), auth_user_id (links to Supabase login), is_active, sort_order`
+`id, name, photo_url, bio, side ('men' | 'women' | 'both': which page shows them), team ('barber' | 'stylist': which services they do), email (private: where their "new booking" email goes), role ('owner' | 'staff'), auth_user_id (links to Supabase login), is_active, sort_order`
+- `email` and `auth_user_id` are **private**: the public (anon) and signed-in keys can only read `id, name, photo_url, bio, side, role, is_active, sort_order, team` (column grants). The server reads emails with the service role key.
 
 **`categories`**
 `id, side ('men' | 'women'), name_en, name_fr, sort_order`
 
 **`services`**
-`id, category_id, side, name_en, name_fr, description, image_url, base_duration_minutes (nullable), is_active, sort_order`
+`id, category_id, side, team ('barber' | 'stylist'), slug, name_en, name_fr, description, image_url, base_duration_minutes (nullable), length_based, is_active, sort_order`
 
 **`service_variants`** — the sizes (men's services have one variant called "Standard")
 `id, service_id, label ('Small', '2-4 cornrows'…), price_cents (nullable), is_consult (bool), duration_minutes (nullable), sort_order`
@@ -256,19 +259,35 @@ alter table bookings add constraint no_overlap
   ) where (status = 'booked');
 ```
 
-### 6.4 Durations (how long each service takes)
+### 6.4 Durations (how long each booking blocks)
 
-- Men's cuts: use the minutes in `services-seed.json` (Classic 30, Cut + Beard 40, Kids 30, Beard 15, Outline 15).
-- Every braid / twist / loc style (both sides): Aubin said **roughly 2 to 3 hours**. Use this rule by size:
+Change Request #2 (Aubin, Oct 31). The minutes live in `services-seed.json` (`duration_min`) and in `services.base_duration_minutes`:
 
-| Size | Minutes |
-|---|---|
-| XMicro, Micro, XSmall, Small | 180 (3h) |
-| Smedium, Medium | 150 (2h30) |
-| Large, XLarge, Jumbo, and count-based sizes ("2-4 cornrows", "5-6 lines"…) | 120 (2h) |
+| Team | Service | Minutes |
+|---|---|---|
+| Barber | Classic Haircut | 35 |
+| Barber | Haircut & Beard Trim | 45 |
+| Barber | Kids | 30 |
+| Barber | Beard | 15 |
+| Barber | Outline | 15 |
+| Stylist | **Every** braid / twist / loc / French curl / cornrow service, every size, both sides | 60 |
 
+- This **replaces** the old 180 / 150 / 120 minute size rule.
+- ⚠️ Risk (flagged, not changed): a 2–3 hour style now blocks only 1 hour, so a stylist could be double-booked on a long style. Aubin knows his team; confirm with him (section 12).
 - Add-on `extra_minutes` default 0.
-- Put this rule in **one function** (`getDurationMinutes`) so the owner can later replace it with exact times per style.
+- Keep the rule in **one function** (`getDurationMinutes`) so Aubin's real per-style times can replace it later (set `duration_min` per service or `duration_minutes` per size).
+
+### 6.4a Teams: who does what
+
+| Team | People | Services |
+|---|---|---|
+| `barber` | Barber A, Barber B | Classic Haircut, Haircut & Beard Trim, Kids, Beard, Outline (5) |
+| `stylist` | Barber C, Barber D | every other service (37): the 4 men's "Braids, Twists & Locs" (Simple Cornrows, Stitch Cornrows, Barrel Twists, Locs Re-twist) **and** all 33 women's styles |
+
+- The team comes from the category's `team` in `services-seed.json` (catalog: `service.team`, `staff.team`, `staffForTeam(team)`).
+- `staff_services` = each person does **exactly** their team's services (2 × 5 + 2 × 37 = **84** rows). Never across teams.
+- `side` is unchanged: it only decides which page (Men / Women) shows a service or a person.
+- Live data is moved by the migration `supabase/migrations/20261031120000_cr2_teams_prices_durations.sql` (paste-ready copy with checks: `supabase/manual/cr2_teams_prices_durations.sql`).
 
 ### 6.5 Who can see what (Row Level Security)
 
@@ -276,7 +295,7 @@ Like a school: anyone can read the posters in the hallway, only teachers enter t
 
 | Table | Public (no login) | Staff | Owner |
 |---|---|---|---|
-| settings, staff (active), categories, services, variants, addons, staff_services | read | read | read + write |
+| settings, staff (active; public columns only, **never `email`**), categories, services, variants, addons, staff_services | read | read | read + write |
 | working_hours, time_off | no | read/write **own** | read/write all |
 | bookings | **no** (never) | read/update **own** | read/update all |
 
@@ -296,7 +315,7 @@ Like a school: anyone can read the posters in the hallway, only teachers enter t
 2. Get the person's working hours for that weekday.
 3. Remove their time off.
 4. Remove their existing `booked` bookings.
-5. Walk through the day in 15-minute steps. Keep a start time only if the whole service fits in a free block.
+5. Walk through the day in steps of the service's team (barbers 5 minutes, stylists 60 minutes: `settings.barber_slot_minutes` / `stylist_slot_minutes`). Keep a start time only if the whole service fits in a free block.
 6. Remove times in the past or within `min_notice_minutes`.
 7. For "anyone", do steps 2–6 for every person who does this service, and merge the results.
 
@@ -313,7 +332,7 @@ Like a school: anyone can read the posters in the hallway, only teachers enter t
 | When | To | Says |
 |---|---|---|
 | Booking created | Customer | Service, person, date/time, estimated price, address, "pay at the salon", **cancel link** |
-| Booking created | Salon email + the staff member | New booking details |
+| Booking created | Salon email + the staff member (`staff.email`) | New booking details |
 | Booking cancelled | Salon email + staff member | "Cancelled" |
 
 If emails fail, the booking is still saved. Log the error.
@@ -383,10 +402,11 @@ If an image is missing, show a neutral `oak` box with the service name. Never br
 
 1. Book a men's haircut on a phone → it appears on that barber's dashboard.
 2. Try to book the same barber at the same time from a second browser → the second gets the "just booked" message.
-3. A 30-minute Classic Haircut is offered at 19:30 but never at 19:45 when the day ends at 20:00. Sunday shows times, and Sunday Nov 1, 2026 (DST change) still starts at 10:00.
+3. A 35-minute Classic Haircut is offered at 19:25 but never later when the day ends at 20:00. Sunday shows times, and Sunday Nov 1, 2026 (DST change) still starts at 10:00.
 4. Knotless Small + Hip + beads shows **$235** estimated.
 5. A "to discuss" option shows "Price to discuss in the salon" and still books. Knotless Large shows "Ask in salon".
-5b. Cornrows, Barrel Twists and Locs Re-twist appear on the **Men** page only. A Small knotless braid offers no slot that would end after closing (180 min).
+5b. Cornrows, Barrel Twists and Locs Re-twist appear on the **Men** page only. A Small knotless braid (60 min block) offers no slot that would end after closing (19:00 is the last start).
+5c. Simple Cornrows (Men page) offers only the stylists (C, D) + "Anyone available"; a Classic Haircut offers only the barbers (A, B).
 6. A staff member cannot see another staff member's bookings. The owner can see all.
 7. Opening `/api/...` from the browser never leaks the bookings list.
 8. No page asks for a card or a deposit.
@@ -401,18 +421,32 @@ If an image is missing, show a neutral `oak` box with the service name. Never br
 |---|---|
 | Staff | 4 people, no names yet: Barber A, B, C, D |
 | Phone | (418) 255-2571 (from the shop flyer) |
-| Braid/twist/loc durations | Roughly 2–3 hours (rule in 6.4) |
-| Men's menu | Add Classic Haircut $25 + braid styles; more photos later |
+| Braid/twist/loc durations | Roughly 2–3 hours (replaced Oct 31 by a 60 min block, see 6.4) |
+| Men's menu | Add Classic Haircut $25 (now $30, Oct 31) + braid styles; more photos later |
 | Passion Twists Micro | $350 |
 | Knotless Braids Large | Price left blank → "Ask in salon" |
 | Duplicate style names | Keep as Style A, B, C, D |
 | Cornrows, Barrel Twists, Locs Re-twist | **Men's side** |
 | Extra length | +$15 per step past mid-back (confirmed) |
 
+### Decisions made (Oct 31, Change Request #2)
+
+| Question | Answer |
+|---|---|
+| Classic Haircut price | $25 → **$30** |
+| Haircut & Beard Trim price | $30 → **$35** |
+| Kids / Beard / Outline | unchanged: $25 / $20 / $20; 30 / 15 / 15 min |
+| Barber blocks | Classic **35 min**, Haircut & Beard Trim **45 min**; start times every **5 min** |
+| Stylist blocks | **60 min** for every braid / twist / loc style (replaces the 180/150/120 rule); start times on the hour |
+| Teams | Barber A, B = barbers (5 haircut services); Barber C, D = stylists (every braid / twist / loc service, both sides, incl. men's cornrows) |
+| Staff emails | New private `staff.email` column; placeholders until Aubin sends real ones (set in the database, never in the repo) |
+
 ## 12. Still open (placeholders are fine for the demo)
 
 1. ~~Shop hours~~ Done: every day 10:00–20:00 (Oct 30).
-2. Which side Barbers A–D work (demo: A, B men / C, D women).
+2. **Real names and emails** for each barber and stylist (and which team each is in). Names: replace "Barber A … D" only when Aubin sends them. Emails: set them in the database (Supabase SQL editor), **never in the repo** (it is public).
+6. **Kids haircut**: keep 30 minutes and $25?
+7. **Stylist 60 min block**: is 1 hour right for long styles (2–3 h)? Today a stylist can be booked again 1 hour after a long style starts.
 3. **Language**: French first, English first, or a switch?
 4. **Cancellation**: how late can a customer cancel online (e.g. up to 24h before)?
 5. Instagram / TikTok links.

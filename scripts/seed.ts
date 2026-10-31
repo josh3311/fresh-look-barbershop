@@ -6,6 +6,9 @@
 //   --build            -> used by `npm run build`: only adds missing rows (never
 //                         overwrites the owner's edits), skips if keys are missing,
 //                         and never fails the deploy.
+//
+// Staff emails: the seed only fills an email that is still empty (placeholders from
+// lib/seed-rows.ts). It never overwrites a real email set in the database.
 import { writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { buildSeedRows, primaryKey, SEED_TABLES, toSql } from "../lib/seed-rows";
@@ -40,12 +43,24 @@ async function main() {
 
   for (const table of SEED_TABLES) {
     if (!rows[table].length) continue;
-    const { error } = await db.from(table).upsert(rows[table] as Record<string, unknown>[], {
+    // Upsert staff without the email column, then fill only the empty emails below.
+    const list = (rows[table] as Record<string, unknown>[]).map((r) => {
+      if (table !== "staff") return r;
+      const copy = { ...r };
+      delete copy.email;
+      return copy;
+    });
+    const { error } = await db.from(table).upsert(list, {
       onConflict: primaryKey(table).replace(" ", ""),
       ignoreDuplicates: buildMode,
     });
     if (error) throw new Error(`${table}: ${error.message}`);
     console.log(`seed: ${table} ${rows[table].length} rows`);
+  }
+
+  for (const person of rows.staff) {
+    const { error } = await db.from("staff").update({ email: person.email }).eq("id", person.id).is("email", null);
+    if (error) throw new Error(`staff email: ${error.message}`);
   }
 }
 

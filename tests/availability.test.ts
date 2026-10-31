@@ -41,12 +41,13 @@ describe("getFreeStartTimes (spec 5.4 / 6.6)", () => {
     expect(slots.at(-1)).toBe("19:15");
   });
 
-  it("Knotless Small (180 min) offers no slot that ends after closing", () => {
+  // Change Request #2 (A3, Oct 31): every stylist service blocks 60 min (was 180 for Small).
+  it("Knotless Small (60 min stylist block) offers no slot that ends after closing", () => {
     const knotless = services.find((s) => s.slug === "knotless-braids")!;
     const minutes = getDurationMinutes({ service: knotless, variant: knotless.variants.find((v) => v.label === "Small")! });
-    expect(minutes).toBe(180);
+    expect(minutes).toBe(60);
     const slots = labels(getFreeStartTimes({ ...base, durationMinutes: minutes }));
-    expect(slots.at(-1)).toBe("17:00");
+    expect(slots.at(-1)).toBe("19:00");
   });
 
   it("skips times that overlap an existing booking", () => {
@@ -108,9 +109,10 @@ describe("opening hours (change request #1)", () => {
 });
 
 describe("getDurationMinutes (spec 6.4)", () => {
+  // Change Request #2 (A2, Oct 31): Haircut & Beard Trim blocks 45 min (was 40).
   it("uses the men's cut minutes from the seed", () => {
     const cut = services.find((s) => s.slug === "haircut-beard-trim")!;
-    expect(getDurationMinutes({ service: cut, variant: cut.variants[0] })).toBe(40);
+    expect(getDurationMinutes({ service: cut, variant: cut.variants[0] })).toBe(45);
   });
 
   it("size rule: 3h / 2h30 / 2h", () => {

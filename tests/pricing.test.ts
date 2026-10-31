@@ -76,10 +76,11 @@ describe("catalog (spec 2, 10.5b, 10.10)", () => {
     expect(services.filter((s) => s.side === "women")).toHaveLength(33);
   });
 
-  it("Classic Haircut comes first at $25", () => {
+  // Change Request #2 (A1, Oct 31): Classic Haircut $25 -> $30.
+  it("Classic Haircut comes first at $30", () => {
     const first = categoriesFor("men")[0].services[0];
     expect(first.nameEn).toBe("Classic Haircut");
-    expect(first.variants[0].priceCents).toBe(2500);
+    expect(first.variants[0].priceCents).toBe(3000);
   });
 
   it("women's tabs are Braids, Twists, French Curls, Locs", () => {
