@@ -24,8 +24,24 @@ export interface CreateBookingResult {
 }
 
 /**
- * Validates, re-checks price + availability, inserts, then emails the salon and the
- * customer. The database exclusion constraint is the final word on overlaps.
+ * The assigned person's email (CR2 A6), read with the service-role client: staff.email is
+ * private. Never throws; null when unknown. Logs the booking id only, never the address.
+ */
+async function staffEmailFor(db: SupabaseClient, staffId: string, bookingId: string): Promise<string | null> {
+  try {
+    const { data, error } = await db.from("staff").select("email").eq("id", staffId).maybeSingle();
+    if (error) throw new Error("query_error");
+    const email = (data as { email?: unknown } | null)?.email;
+    return typeof email === "string" && email.trim() ? email.trim() : null;
+  } catch (e) {
+    console.error(`[email] staff email lookup failed for booking ${bookingId}: ${e instanceof Error && e.message === "query_error" ? "query_error" : "lookup_error"}`);
+    return null;
+  }
+}
+
+/**
+ * Validates, re-checks price + availability, inserts, then emails the salon, the customer
+ * and the assigned barber/stylist. The database exclusion constraint is the final word on overlaps.
  * `notify` failing never changes the result: the booking is already saved.
  */
 export async function createBooking(
@@ -114,6 +130,7 @@ export async function createBooking(
       }
 
       // Saved. From here on nothing can turn this into a failure.
+      const staffEmail = await staffEmailFor(db, person.id, data.id);
       try {
         await notify({
           id: data.id,
@@ -125,12 +142,14 @@ export async function createBooking(
           lengthLabel,
           addons: sel.addons.map((a) => a.name),
           staffName: person.name,
+          staffEmail,
           startsAt,
           estimate,
           notes: b.notes || null,
         });
       } catch (e) {
-        console.error(`[email] notification failed for booking ${data.id}: ${e instanceof Error ? e.message : "unknown"}`);
+        // Error name only: a message could echo customer details.
+        console.error(`[email] notification failed for booking ${data.id}: ${e instanceof Error ? e.name : "unknown"}`);
       }
       return { status: 201, body: { id: data.id } };
     }

@@ -18,6 +18,11 @@ export interface BookingSummary {
   lengthLabel: string | null;
   addons: string[];
   staffName: string;
+  /**
+   * The assigned barber/stylist's address, read server-side with the service role right
+   * after the insert (staff.email is private). null = unknown: no staff email is sent.
+   */
+  staffEmail: string | null;
   startsAt: Date;
   estimate: Estimate;
   notes: string | null;
@@ -86,7 +91,7 @@ export function buildSalonEmail(s: BookingSummary, to = salonNotifyEmail()): Ema
     [t.service, serviceLine(s)],
     [t.addons, s.addons.length ? s.addons.join(", ") : t.none],
     [t.person, s.staffName],
-    [t.when, `${when} (Ottawa time)`],
+    [t.when, `${when} ${t.ottawaTime}`],
     [t.price, estimateLabel(s.estimate)],
     ...(s.notes ? ([[t.notes, s.notes]] as [string, string][]) : []),
     [t.bookingId, s.id],
@@ -99,7 +104,7 @@ export function buildSalonEmail(s: BookingSummary, to = salonNotifyEmail()): Ema
   };
 }
 
-/** Confirmation to the customer: same details + address + pay in salon. */
+/** Confirmation to the customer: service, person, date/time, price, address, "Pay in salon". */
 export function buildCustomerEmail(s: BookingSummary): EmailMessage {
   const when = whenLabel(s.startsAt);
   const rows: [string, string][] = [
@@ -108,6 +113,7 @@ export function buildCustomerEmail(s: BookingSummary): EmailMessage {
     [t.person, s.staffName],
     [t.when, when],
     [t.price, estimateLabel(s.estimate)],
+    [t.payment, t.payInSalonShort],
     [t.customer, s.customerName],
     [t.phone, formatPhone(s.customerPhone)],
     [t.email, s.customerEmail],
@@ -125,48 +131,116 @@ export function buildCustomerEmail(s: BookingSummary): EmailMessage {
   };
 }
 
-/** Sends one email through Resend. Throws on failure. */
-export async function sendEmail(msg: EmailMessage): Promise<void> {
+/** To the chosen (or, for "Anyone available", the assigned) barber/stylist (CR2 A6). */
+export function buildStaffEmail(s: BookingSummary, to: string): EmailMessage {
+  const when = whenLabel(s.startsAt);
+  const rows: [string, string][] = [
+    [t.customer, s.customerName],
+    [t.phone, formatPhone(s.customerPhone)],
+    [t.email, s.customerEmail],
+    [t.service, serviceLine(s)],
+    [t.addons, s.addons.length ? s.addons.join(", ") : t.none],
+    [t.when, `${when} ${t.ottawaTime}`],
+    [t.price, estimateLabel(s.estimate)],
+    ...(s.notes ? ([[t.notes, s.notes]] as [string, string][]) : []),
+    [t.bookingId, s.id],
+  ];
+  return {
+    to,
+    replyTo: s.customerEmail,
+    subject: t.staffSubject.replace("{service}", s.serviceName).replace("{when}", when),
+    ...render(t.staffHeading, t.staffIntro.replace("{person}", s.staffName), rows, []),
+  };
+}
+
+/**
+ * Placeholder addresses (the seed's barber.a@example.invalid ...) can never receive mail.
+ * `.invalid` is a reserved TLD (RFC 2606), so it is safe to refuse it everywhere.
+ */
+export const isPlaceholderAddress = (to: string) => to.trim().toLowerCase().endsWith(".invalid");
+
+/** A short, fixed reason code. Never an error message: those can echo addresses. */
+export class EmailError extends Error {
+  constructor(public code: string) {
+    super(code);
+    this.name = "EmailError";
+  }
+}
+
+export type EmailOutcome = "sent" | "skipped" | "failed";
+
+/**
+ * Sends one email through Resend. "skipped" for a placeholder address (no request made).
+ * Throws an EmailError (reason code only) on failure.
+ */
+export async function sendEmail(msg: EmailMessage): Promise<"sent" | "skipped"> {
+  if (isPlaceholderAddress(msg.to)) return "skipped";
   const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error("RESEND_API_KEY not set");
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM?.trim() || DEFAULT_FROM,
-      to: [msg.to],
-      subject: msg.subject,
-      text: msg.text,
-      html: msg.html,
-      ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
-    }),
-    signal: AbortSignal.timeout(8000),
-  });
+  if (!key) throw new EmailError("RESEND_API_KEY not set");
+  let res: Response;
+  try {
+    res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM?.trim() || DEFAULT_FROM,
+        to: [msg.to],
+        subject: msg.subject,
+        text: msg.text,
+        html: msg.html,
+        ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (e) {
+    throw new EmailError(e instanceof Error && e.name === "TimeoutError" ? "timeout" : "network_error");
+  }
   if (!res.ok) {
     // Only the status + Resend's error name: the message can echo addresses.
     const name = await res
       .json()
-      .then((b: { name?: string }) => b?.name ?? "unknown")
+      .then((b: { name?: unknown }) => (typeof b?.name === "string" && /^[a-z_]{1,64}$/.test(b.name) ? b.name : "unknown"))
       .catch(() => "unknown");
-    throw new Error(`Resend ${res.status} ${name}`);
+    throw new EmailError(`Resend ${res.status} ${name}`);
   }
+  return "sent";
 }
 
+type Kind = "salon" | "customer" | "staff";
+
 /**
- * Salon notification + customer confirmation. Never throws: a failed email must not
- * undo a saved booking. Logs the booking id and the reason only, never customer details.
+ * Salon copy + customer confirmation + the assigned barber/stylist. Never throws: a failed
+ * email must not undo a saved booking. Logs the booking id and a reason code only, never
+ * customer details and never a staff address.
  */
-export async function sendBookingEmails(s: BookingSummary): Promise<{ salon: boolean; customer: boolean }> {
-  const jobs = [
+export async function sendBookingEmails(s: BookingSummary): Promise<Record<Kind, EmailOutcome>> {
+  const jobs: [Kind, () => EmailMessage | null][] = [
     ["salon", () => buildSalonEmail(s)],
     ["customer", () => buildCustomerEmail(s)],
-  ] as const;
-  const results = await Promise.allSettled(jobs.map(([, build]) => sendEmail(build())));
+    ["staff", () => (s.staffEmail?.trim() ? buildStaffEmail(s, s.staffEmail.trim()) : null)],
+  ];
+  const results = await Promise.allSettled(
+    jobs.map(async ([kind, build]): Promise<EmailOutcome> => {
+      const msg = build();
+      if (!msg) {
+        console.warn(`[email] no ${kind} email address for booking ${s.id}: skipped`);
+        return "skipped";
+      }
+      const r = await sendEmail(msg);
+      if (r === "skipped") console.warn(`[email] skipped placeholder ${kind} email for booking ${s.id}`);
+      return r;
+    }),
+  );
+  const out = {} as Record<Kind, EmailOutcome>;
   results.forEach((r, i) => {
-    if (r.status === "rejected") {
-      const reason = r.reason instanceof Error ? r.reason.message : "unknown error";
-      console.error(`[email] ${jobs[i][0]} email failed for booking ${s.id}: ${reason}`);
+    const kind = jobs[i][0];
+    if (r.status === "fulfilled") {
+      out[kind] = r.value;
+      return;
     }
+    const reason = r.reason instanceof EmailError ? r.reason.code : "unknown_error";
+    console.error(`[email] ${kind} email failed for booking ${s.id}: ${reason}`);
+    out[kind] = "failed";
   });
-  return { salon: results[0].status === "fulfilled", customer: results[1].status === "fulfilled" };
+  return out;
 }

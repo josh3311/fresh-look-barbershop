@@ -3,7 +3,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { shop } from "@/lib/catalog";
 import { t } from "@/lib/i18n";
 import { formatPhone } from "@/lib/phone";
-import type { StaffBooking } from "@/lib/server/staff-bookings";
+import type { StaffBooking, StaffFilterPerson } from "@/lib/server/staff-bookings";
 import { signOut } from "@/app/staff/actions";
 import { CancelButton } from "@/components/staff/CancelButton";
 
@@ -17,7 +17,9 @@ export function SignOutButton() {
   );
 }
 
-/** Bookings grouped by day (salon time), sorted by time, with a barber filter. */
+const teamLabel = (team?: string) => (team === "stylist" ? t.book.teamStylist : team === "barber" ? t.book.teamBarber : null);
+
+/** Bookings grouped by day (salon time), sorted by time, with a barber/stylist filter. */
 export function StaffDashboard({
   bookings,
   staff,
@@ -26,7 +28,7 @@ export function StaffDashboard({
   today,
 }: {
   bookings: StaffBooking[];
-  staff: { id: string; name: string }[];
+  staff: StaffFilterPerson[];
   filter?: string;
   email: string;
   today: string;
@@ -49,13 +51,14 @@ export function StaffDashboard({
         <SignOutButton />
       </div>
 
-      <nav aria-label="Filter by barber" className="no-scrollbar -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-1">
+      <nav aria-label={t.staff.filterLabel} className="no-scrollbar -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-1">
         <Link href="/staff" className={pill(!filter)} aria-current={!filter ? "page" : undefined}>
           {t.staff.allBarbers}
         </Link>
         {staff.map((s) => (
           <Link key={s.id} href={`/staff?staff=${s.id}`} className={pill(filter === s.id)} aria-current={filter === s.id ? "page" : undefined}>
             {s.name}
+            {teamLabel(s.team) && <span className="font-normal"> · {teamLabel(s.team)}</span>}
           </Link>
         ))}
       </nav>

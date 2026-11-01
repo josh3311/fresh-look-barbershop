@@ -1,6 +1,6 @@
 import "server-only";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
-import { shop } from "@/lib/catalog";
+import { shop, type Team } from "@/lib/catalog";
 import { getAdminClient } from "@/lib/server/supabase";
 import { todayIn } from "@/lib/server/booking-context";
 
@@ -17,6 +17,12 @@ export interface StaffBooking {
   customerPhone: string;
   customerEmail: string;
   notes: string | null;
+}
+
+export interface StaffFilterPerson {
+  id: string;
+  name: string;
+  team?: Team;
 }
 
 interface Row {
@@ -53,7 +59,8 @@ export async function loadUpcomingBookings(staffId?: string) {
 
   const [{ data, error }, staffRes] = await Promise.all([
     query,
-    db.from("staff").select("id, name").eq("is_active", true).order("sort_order"),
+    // Public columns only (never email): the dashboard only needs names and teams.
+    db.from("staff").select("id, name, team").eq("is_active", true).order("sort_order"),
   ]);
   if (error) throw new Error(`bookings: ${error.message}`);
   const rows = (data ?? []) as unknown as Row[];
@@ -84,5 +91,5 @@ export async function loadUpcomingBookings(staffId?: string) {
     };
   });
 
-  return { bookings, staff: (staffRes.data ?? []) as { id: string; name: string }[] };
+  return { bookings, staff: (staffRes.data ?? []) as StaffFilterPerson[] };
 }
