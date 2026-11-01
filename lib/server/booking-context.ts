@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { addDaysToDate, getFreeStartTimes, slotMinutesForTeam, weekdayOf, type Interval } from "@/lib/availability";
-import { TEAMS, type Team } from "@/lib/catalog";
+import { onlyStaffIdsFor, findService, TEAMS, type Team } from "@/lib/catalog";
 import { getDurationMinutes } from "@/lib/duration";
 
 export class HttpError extends Error {
@@ -108,9 +108,12 @@ export async function loadEligibleStaff(db: SupabaseClient, service: { id: strin
     .select("staff:staff_id (id, name, is_active, sort_order, team)")
     .eq("service_id", service.id);
   if (error) throw new Error(`staff_services: ${error.message}`);
+  // only_staff from services-seed.json (Hair Color: Noël only), on top of staff_services + team.
+  const catalogService = findService(service.id);
+  const only = catalogService ? onlyStaffIdsFor(catalogService) : null;
   const people = (data ?? [])
     .map((r) => r.staff as unknown as EligibleStaff)
-    .filter((s) => s && s.is_active && s.team === service.team)
+    .filter((s) => s && s.is_active && s.team === service.team && (!only || only.includes(s.id)))
     .sort((a, b) => a.sort_order - b.sort_order);
   if (staffId === "any") return people;
   const one = people.filter((p) => p.id === staffId);

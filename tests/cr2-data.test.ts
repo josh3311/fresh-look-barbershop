@@ -32,7 +32,11 @@ describe("A1 prices (cents)", () => {
 
   it("T-103 every other price (sizes and add-ons) is exactly what it was before CR2", () => {
     const changed = new Set([svc("classic-haircut").variants[0].id, svc("haircut-beard-trim").variants[0].id]);
-    const now = buildSeedRows();
+    // Hair Color (Aubin, Nov 1) added 8 new sizes after CR2; they are checked in T-402
+    // (tests/hair-color.test.tsx). Every size that existed before CR2 is compared here.
+    const hairColor = new Set(svc("hair-color").variants.map((v) => v.id));
+    const all = buildSeedRows();
+    const now = { ...all, service_variants: all.service_variants.filter((v) => !hairColor.has(v.id)) };
 
     const oldVariants = new Map(before.service_variants.map((v) => [v.id, v.price_cents]));
     expect(now.service_variants.map((v) => v.id).sort()).toEqual([...oldVariants.keys()].sort());
@@ -68,9 +72,10 @@ describe("A2/A3 booking blocks (minutes, as data)", () => {
 });
 
 describe("teams", () => {
-  it("T-106 5 barber services, 37 stylist services, 42 total; Locs Installation still absent", () => {
-    expect(services).toHaveLength(42);
-    expect(services.filter((s) => s.team === "barber").map((s) => s.slug)).toEqual(BARBER_SLUGS);
+  // Hair Color (Aubin, Nov 1): 6 barber services, 43 total (was 5 / 42).
+  it("T-106 6 barber services (5 cuts + Hair Color), 37 stylist services, 43 total; Locs Installation still absent", () => {
+    expect(services).toHaveLength(43);
+    expect(services.filter((s) => s.team === "barber").map((s) => s.slug)).toEqual([...BARBER_SLUGS, "hair-color"]);
     expect(services.filter((s) => s.team === "stylist")).toHaveLength(37);
     expect(services.some((s) => /locs installation/i.test(s.nameEn))).toBe(false);
     // The men's braid styles are stylist services but stay on the Men page.
@@ -108,16 +113,18 @@ describe("A4 routing: staff_services from the seed", () => {
     rows.staff_services.filter((r) => slugOf.get(r.service_id) === slug).map((r) => nameOf.get(r.staff_id)!);
 
   // Roster (Nov 1): 4 barbers x 5 + 2 stylists x 37 = 94 (was 2 x 5 + 2 x 37 = 84).
-  it("T-108 94 rows, no duplicates, no cross-team pair, each person exactly their team's services", () => {
-    expect(rows.staff_services).toHaveLength(94);
-    expect(new Set(rows.staff_services.map((r) => `${r.staff_id}:${r.service_id}`)).size).toBe(94);
+  // Hair Color (Aubin, Nov 1): + Noël only = 95.
+  it("T-108 95 rows, no duplicates, no cross-team pair, each person exactly their team's services (Hair Color: Noël only)", () => {
+    expect(rows.staff_services).toHaveLength(95);
+    expect(new Set(rows.staff_services.map((r) => `${r.staff_id}:${r.service_id}`)).size).toBe(95);
 
     const teamOfService = new Map(rows.services.map((s) => [s.id, s.team]));
     const teamOfStaff = new Map(rows.staff.map((p) => [p.id, p.team]));
     expect(rows.staff_services.filter((r) => teamOfService.get(r.service_id) !== teamOfStaff.get(r.staff_id))).toEqual([]);
 
     const stylistSlugs = services.filter((s) => s.team === "stylist").map((s) => s.slug).sort();
-    for (const name of ["Noël", "Jackson", "Joshua", "Duckel"]) expect(servicesOf(name).sort(), name).toEqual([...BARBER_SLUGS].sort());
+    expect(servicesOf("Noël").sort()).toEqual([...BARBER_SLUGS, "hair-color"].sort());
+    for (const name of ["Jackson", "Joshua", "Duckel"]) expect(servicesOf(name).sort(), name).toEqual([...BARBER_SLUGS].sort());
     for (const name of ["Reine", "Olga"]) expect(servicesOf(name).sort(), name).toEqual(stylistSlugs);
 
     expect(staffOf("simple-cornrows").sort()).toEqual(["Olga", "Reine"]);

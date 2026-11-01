@@ -114,8 +114,9 @@ describe("A3 stylist start times (on the hour)", () => {
 });
 
 describe("closing time, DST, notice", () => {
-  it("T-208 for every one of the 42 services no start + block ends after 20:00", () => {
-    expect(services).toHaveLength(42);
+  // Hair Color (Aubin, Nov 1) is the 43rd service (was 42); its 8 sizes are checked here too.
+  it("T-208 for every one of the 43 services no start + block ends after 20:00", () => {
+    expect(services).toHaveLength(43);
     for (const s of services) {
       for (const v of s.variants) {
         const list = starts(s, { label: v.label });

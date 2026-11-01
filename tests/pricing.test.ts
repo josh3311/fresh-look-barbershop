@@ -71,8 +71,9 @@ describe("catalog (spec 2, 10.5b, 10.10)", () => {
     expect(services.find((s) => s.slug === "knotless-braids")!.lengthBased).toBe(true);
   });
 
-  it("has 9 men's services and 33 women's styles", () => {
-    expect(services.filter((s) => s.side === "men")).toHaveLength(9);
+  // Hair Color (Aubin, Nov 1) is the 10th men's service (was 9).
+  it("has 10 men's services and 33 women's styles", () => {
+    expect(services.filter((s) => s.side === "men")).toHaveLength(10);
     expect(services.filter((s) => s.side === "women")).toHaveLength(33);
   });
 

@@ -67,6 +67,7 @@ const en = {
     title: "Men / Hommes",
     cutsTab: "Cuts / Coupes",
     stylesTab: "Braids, Twists & Locs / Tresses, Twists & Locs",
+    colorTab: "Hair Color / Coloration",
     fromBadge: "From",
     barbers: "Barbers",
     portfolio: "Recent cuts",
@@ -86,7 +87,11 @@ const en = {
     min: "min",
     /** Barber cut cards only (CR2 A2). */
     aboutMin: "about {n} min",
+    /** A barber service whose options take different times (Hair Color 30 / 60). */
+    aboutRange: "about {a}–{b} min",
     size: "Size",
+    kind: "Kind",
+    colors: "Colors",
     price: "Price",
     addons: "Add-ons",
     askInSalon: "Ask in salon",
@@ -108,6 +113,14 @@ const en = {
     chooseLength: "Pick a length",
     normalLength: "Normal = armpit to mid-back. Shorter is the same price.",
     chooseAddons: "Add-ons (optional)",
+    /** Hair Color: two required chip groups, kind then color. */
+    chooseOptions: "Pick a kind and a color",
+    chooseKind: "Pick a kind",
+    chooseColor: "Pick a color",
+    pickBoth: "Pick a kind and a color to continue.",
+    cutInNotes: "Any haircut: tell us which one in the notes.",
+    kind: "Kind",
+    color: "Color",
     select: "Select",
     selected: "Selected",
     change: "Change",
@@ -214,6 +227,15 @@ const en = {
     none: "None",
     changes: "To change or cancel, call the salon at {phone}.",
   },
+  /** Option labels from services-seed.json "choices" (Hair Color), by their English label. */
+  choices: {
+    "Color only": "Color only",
+    "Color + haircut": "Color + haircut",
+    White: "White",
+    Orange: "Orange",
+    Purple: "Purple",
+    "Burgundy red": "Burgundy red",
+  },
 };
 
 export type Dict = typeof en;
@@ -250,6 +272,7 @@ const fr: Dict = {
     title: "Men / Hommes",
     cutsTab: "Cuts / Coupes",
     stylesTab: "Braids, Twists & Locs / Tresses, Twists & Locs",
+    colorTab: "Hair Color / Coloration",
     fromBadge: "Dès",
     barbers: "Barbiers",
     portfolio: "Coupes récentes",
@@ -268,7 +291,10 @@ const fr: Dict = {
     from: "dès",
     min: "min",
     aboutMin: "environ {n} min",
+    aboutRange: "environ {a} à {b} min",
     size: "Taille",
+    kind: "Type",
+    colors: "Couleurs",
     price: "Prix",
     addons: "Options",
     askInSalon: "Demander au salon",
@@ -290,6 +316,13 @@ const fr: Dict = {
     chooseLength: "Choisissez une longueur",
     normalLength: "Normal = aisselles au milieu du dos. Plus court = même prix.",
     chooseAddons: "Options (facultatif)",
+    chooseOptions: "Choisissez le type et la couleur",
+    chooseKind: "Choisissez le type",
+    chooseColor: "Choisissez la couleur",
+    pickBoth: "Choisissez le type et la couleur pour continuer.",
+    cutInNotes: "N'importe quelle coupe : indiquez laquelle dans les notes.",
+    kind: "Type",
+    color: "Couleur",
     select: "Choisir",
     selected: "Choisi",
     change: "Modifier",
@@ -395,6 +428,14 @@ const fr: Dict = {
     none: "Aucune",
     changes: "Pour modifier ou annuler, appelez le salon au {phone}.",
   },
+  choices: {
+    "Color only": "Couleur seulement",
+    "Color + haircut": "Couleur + coupe",
+    White: "Blanc",
+    Orange: "Orange",
+    Purple: "Violet",
+    "Burgundy red": "Rouge bordeaux",
+  },
 };
 
 export const dict = { en, fr };
@@ -402,3 +443,8 @@ export type Lang = keyof typeof dict;
 
 /** The demo is English (with bilingual service names). */
 export const t: Dict = dict.en;
+
+/** A choice option label (Hair Color kind / colour) in one language; unknown labels stay as they are. */
+export function choiceLabel(label: string, lang: Lang = "en"): string {
+  return (dict[lang].choices as Record<string, string>)[label] ?? label;
+}

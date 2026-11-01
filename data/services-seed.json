@@ -3,7 +3,8 @@
     "Transcribed from the menus Aubin sent (men's Square screenshot + Beaudy_By_Olga flyers).",
     "Prices are in CAD dollars. Store them as cents in the database (30 -> 3000).",
     "duration_min is the booking block in minutes (CR2, Oct 31): barber cuts 35/45/30/15/15, every stylist service 60. 'team' on each category says who does it: 'barber' (Barber A, B) or 'stylist' (Barber C, D).",
-    "Anything in 'flags' must be confirmed with Aubin before going live."
+    "Anything in 'flags' must be confirmed with Aubin before going live.",
+    "'only_staff' on a service (staff keys from staff_demo, e.g. 'barber-a') limits it to those people inside its team. 'choices' on a service = required option groups; every combination is one size (variant), with the summed price and minutes of its options."
   ],
   "rules": {
     "currency": "CAD",
@@ -192,6 +193,55 @@
             }
           ],
           "duration_min": 60
+        }
+      ]
+    },
+    {
+      "category_en": "Hair Color",
+      "category_fr": "Coloration",
+      "team": "barber",
+      "services": [
+        {
+          "name_en": "Hair Color",
+          "name_fr": "Coloration",
+          "duration_min": 30,
+          "only_staff": ["barber-a"],
+          "choices": [
+            {
+              "key": "kind",
+              "options": [
+                {
+                  "label": "Color only",
+                  "price": 50,
+                  "duration_min": 30
+                },
+                {
+                  "label": "Color + haircut",
+                  "price": 75,
+                  "duration_min": 60,
+                  "note": "Any haircut. The customer names the cut in the booking notes (no cut picker)."
+                }
+              ]
+            },
+            {
+              "key": "color",
+              "options": [
+                {
+                  "label": "White"
+                },
+                {
+                  "label": "Orange"
+                },
+                {
+                  "label": "Purple"
+                },
+                {
+                  "label": "Burgundy red"
+                }
+              ]
+            }
+          ],
+          "note": "Aubin, Nov 1. Colour is required. Each kind x colour is one size (8 variants, e.g. 'Color only · White'), with the kind's price and minutes."
         }
       ]
     }
@@ -1319,7 +1369,9 @@
     "Stylist 60 min block (Oct 31): a long style (2-3 h) still blocks only 1 hour. Aubin knows his team; confirm with him.",
     "Kids: keep 30 min and $25? (open item for Aubin)",
     "Knotless Braids Large price left blank on purpose.",
-    "4 'Knotless Boho Braids' and 4 'Fulani French Curl Braids' kept as Style A-D on purpose."
+    "4 'Knotless Boho Braids' and 4 'Fulani French Curl Braids' kept as Style A-D on purpose.",
+    "Hair Color (Nov 1): men's barber service, done by Noël only (staff key barber-a). Color only $50 / 30 min, Color + haircut $75 / 60 min (any cut, named in the notes); colour required: White, Orange, Purple, Burgundy red.",
+    "Extensions add-on: price from Aubin, then add to those 3 styles (Knotless Braids, Stitch Braids, Knotless Bones Straight Braids)."
   ],
   "shop": {
     "name": "Fresh Look Barbershop",

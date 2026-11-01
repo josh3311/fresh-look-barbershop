@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { Service } from "@/lib/catalog";
-import { t } from "@/lib/i18n";
+import { choiceLabel, t } from "@/lib/i18n";
 import { formatCents } from "@/lib/pricing";
 import { getDurationMinutes } from "@/lib/duration";
 import { bilingual, FromPrice, PhotoOrPlaceholder } from "@/components/ui";
@@ -50,6 +50,44 @@ function addonPrice(a: Service["addons"][number]) {
   return `${a.isFrom ? `${t.service.startAt} ` : ""}+${formatCents(a.priceCents)}`;
 }
 
+/**
+ * Hair Color: the price table lists the kinds (Color only $50, Color + haircut $75), then the
+ * colours to choose from, instead of all 8 kind x colour combinations.
+ */
+function ChoiceTable({ service }: { service: Service }) {
+  return (
+    <div className="mt-4 space-y-4 text-sm">
+      {service.choiceGroups.map((g) =>
+        g.options.some((o) => o.priceCents != null) ? (
+          <table key={g.key} className="w-full">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wider text-muted">
+                <th className="pb-1 font-medium">{t.service.kind}</th>
+                <th className="pb-1 text-right font-medium">{t.service.price}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {g.options.map((o) => (
+                <tr key={o.label} className="border-t border-line">
+                  <td className="py-1.5">{choiceLabel(o.label)}</td>
+                  <td className="py-1.5 text-right font-medium text-gold-text">
+                    {o.priceCents != null ? formatCents(o.priceCents) : t.service.askInSalon}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div key={g.key}>
+            <p className="text-xs uppercase tracking-wider text-muted">{t.service.colors}</p>
+            <p className="mt-1 border-t border-line py-1.5">{g.options.map((o) => choiceLabel(o.label)).join(" · ")}</p>
+          </div>
+        ),
+      )}
+    </div>
+  );
+}
+
 /** Style card: photo, name, "from $X", Book. Tap to open the full price table + add-ons. */
 export function StyleCard({ service }: { service: Service }) {
   const [open, setOpen] = useState(false);
@@ -77,7 +115,9 @@ export function StyleCard({ service }: { service: Service }) {
           <FromPrice service={service} />
         </p>
 
-        {open && (
+        {open && service.choiceGroups.length > 0 && <ChoiceTable service={service} />}
+
+        {open && !service.choiceGroups.length && (
           <div className="mt-4 space-y-4 text-sm">
             <table className="w-full">
               <thead>

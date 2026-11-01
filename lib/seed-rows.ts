@@ -3,7 +3,7 @@
 // Server/seed side only: never import this from app/ or components/ (it holds the
 // placeholder staff emails, which must not reach the browser bundle).
 import seed from "@/data/services-seed.json";
-import { categories, OPENING_HOURS, services, shop, staff, rules } from "@/lib/catalog";
+import { categories, OPENING_HOURS, services, shop, staff, staffForService, rules } from "@/lib/catalog";
 import { stableId } from "@/lib/ids";
 
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
@@ -121,9 +121,12 @@ export function buildSeedRows() {
       })),
     ),
     // Each person does every service of their team (barbers: the 5 cuts; stylists:
-    // every braid/twist/loc service on both sides). Never across teams.
+    // every braid/twist/loc service on both sides), except a service with only_staff
+    // (Hair Color: Noël only). Never across teams.
     staff_services: staff.flatMap((p) =>
-      services.filter((s) => s.team === p.team).map((s) => ({ staff_id: p.id, service_id: s.id })),
+      services
+        .filter((s) => staffForService(s).some((x) => x.id === p.id))
+        .map((s) => ({ staff_id: p.id, service_id: s.id })),
     ),
   };
 }

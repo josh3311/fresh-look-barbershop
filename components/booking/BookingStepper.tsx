@@ -5,13 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { categoriesFor, findService, rules, shop, type Service, type Side } from "@/lib/catalog";
 import { getDurationMinutes } from "@/lib/duration";
-import { t } from "@/lib/i18n";
+import { choiceLabel, t } from "@/lib/i18n";
 import { DEFAULT_LENGTH, LENGTH_OPTIONS, lengthSteps } from "@/lib/lengths";
 import { normalizePhone } from "@/lib/phone";
 import { estimatePrice, formatCents, type Estimate } from "@/lib/pricing";
 import { Avatar } from "@/components/Team";
 import { bilingual, FromPrice } from "@/components/ui";
 import { resolveStaffChoice, staffChoicesFor } from "@/components/booking/staff-choices";
+import { resolveChoiceVariant, type ChoicePicks } from "@/components/booking/variant-choices";
 import { DateChip, SlotArea, type Day } from "@/components/booking/TimeSlots";
 
 const TZ = shop.timezone;
@@ -44,6 +45,8 @@ export function BookingStepper({
   );
   const [lengthLabel, setLengthLabel] = useState(DEFAULT_LENGTH);
   const [addonIds, setAddonIds] = useState<string[]>([]);
+  // Hair Color: one pick per choice group (kind, colour); both resolve to one variant.
+  const [picks, setPicks] = useState<ChoicePicks>({});
   // A preselected person (?staff=) who does not do this service falls back to "Anyone available".
   const [staffId, setStaffId] = useState(
     initialService ? resolveStaffChoice(initialService, initialStaffId) : initialStaffId,
@@ -62,6 +65,7 @@ export function BookingStepper({
   const variant = service?.variants.find((v) => v.id === variantId);
   const addons = service?.addons.filter((a) => addonIds.includes(a.id)) ?? [];
   // Only the service's team (CR2 A4): cornrows from the Men side show the stylists.
+  // Hair Color narrows it to Noël (only_staff).
   const people = service ? staffChoicesFor(service) : [];
   const chosenStaffId = service ? resolveStaffChoice(service, staffId) : staffId;
   const person = people.find((p) => p.id === chosenStaffId);
@@ -88,6 +92,7 @@ export function BookingStepper({
       setServiceId(null);
       setVariantId(null);
       setAddonIds([]);
+      setPicks({});
       setSlotStart(null);
     }
     setSide(s);
@@ -98,6 +103,7 @@ export function BookingStepper({
     setServiceId(s.id);
     setStaffId((cur) => resolveStaffChoice(s, cur));
     setAddonIds([]);
+    setPicks({});
     setLengthLabel(DEFAULT_LENGTH);
     setSlotStart(null);
     if (s.kind === "cut") {
@@ -180,12 +186,29 @@ export function BookingStepper({
       )}
 
       {step === 2 && side && (
-        <StepShell title={service && service.kind === "style" ? t.book.chooseSize : t.book.chooseService} onBack={() => go(1)}>
+        <StepShell
+          title={
+            service && service.kind === "style"
+              ? service.choiceGroups.length
+                ? t.book.chooseOptions
+                : t.book.chooseSize
+              : t.book.chooseService
+          }
+          onBack={() => go(1)}
+        >
           {service && service.kind === "style" ? (
             <StyleConfigurator
               service={service}
               variantId={variantId}
               setVariantId={setVariantId}
+              picks={picks}
+              onPick={(key, label) => {
+                const next = { ...picks, [key]: label };
+                setPicks(next);
+                // Continue stays disabled until every group (kind AND colour) is picked.
+                setVariantId(resolveChoiceVariant(service, next));
+                setSlotStart(null);
+              }}
               lengthLabel={lengthLabel}
               setLengthLabel={setLengthLabel}
               addonIds={addonIds}
@@ -193,6 +216,7 @@ export function BookingStepper({
               onChangeStyle={() => {
                 setServiceId(null);
                 setVariantId(null);
+                setPicks({});
               }}
               onContinue={() => go(3)}
             />
@@ -204,33 +228,15 @@ export function BookingStepper({
 
       {step === 3 && service && (
         <StepShell title={t.book.choosePerson} onBack={() => go(2)}>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <PersonCard
-              selected={chosenStaffId === "any"}
-              onClick={() => {
-                setStaffId("any");
-                setSlotStart(null);
-                go(4);
-              }}
-              title={t.book.anyone}
-              sub={t.book.anyoneSub}
-              avatar={<span className="grid h-14 w-14 place-items-center rounded-full bg-gold text-xl text-onyx">✦</span>}
-            />
-            {people.map((p) => (
-              <PersonCard
-                key={p.id}
-                selected={chosenStaffId === p.id}
-                onClick={() => {
-                  setStaffId(p.id);
-                  setSlotStart(null);
-                  go(4);
-                }}
-                title={p.name}
-                sub={p.team === "stylist" ? t.book.teamStylist : t.book.teamBarber}
-                avatar={<Avatar person={p} size={56} />}
-              />
-            ))}
-          </div>
+          <StaffStep
+            service={service}
+            staffId={staffId}
+            onPick={(id) => {
+              setStaffId(id);
+              setSlotStart(null);
+              go(4);
+            }}
+          />
         </StepShell>
       )}
 
@@ -270,7 +276,14 @@ export function BookingStepper({
         <StepShell title={t.book.review} onBack={() => go(5)}>
           <dl className="divide-y divide-line rounded-xl border border-line bg-surface">
             <Row label={t.book.service} value={bilingual(service)} />
-            {service.kind === "style" && <Row label={t.book.size} value={variant.label} />}
+            {service.kind === "style" &&
+              (variant.choices ? (
+                service.choiceGroups.map((g) => (
+                  <Row key={g.key} label={choiceGroupLabel(g.key)} value={choiceLabel(variant.choices![g.key])} />
+                ))
+              ) : (
+                <Row label={t.book.size} value={variant.label} />
+              ))}
             {service.lengthBased && <Row label={t.book.length} value={lengthLabel} />}
             {addons.length > 0 && <Row label={t.book.addons} value={addons.map((a) => a.name).join(", ")} />}
             <Row label={t.book.person} value={person?.name ?? t.book.anyone} />
@@ -320,6 +333,26 @@ function formatDuration(min: number) {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return h ? `${h}h${m ? String(m).padStart(2, "0") : ""}` : `${m} min`;
+}
+
+/** "about 35 min", or "about 30–60 min" when the options take different times (Hair Color). */
+function aboutMinutes(s: Service) {
+  const all = s.variants.map((v) => getDurationMinutes({ service: s, variant: v }));
+  const lo = Math.min(...all);
+  const hi = Math.max(...all);
+  return lo === hi
+    ? t.service.aboutMin.replace("{n}", String(lo))
+    : t.service.aboutRange.replace("{a}", String(lo)).replace("{b}", String(hi));
+}
+
+/** Short name of a choice group for the review step ("Kind", "Color"). */
+function choiceGroupLabel(key: string) {
+  return key === "kind" ? t.book.kind : key === "color" ? t.book.color : key;
+}
+
+/** Legend of a choice group's chip row ("Pick a kind", "Pick a color"). */
+function choiceGroupLegend(key: string) {
+  return key === "kind" ? t.book.chooseKind : key === "color" ? t.book.chooseColor : key;
 }
 
 function EstimateText({ estimate }: { estimate: Estimate | null }) {
@@ -419,8 +452,7 @@ function ServicePicker({ side, selectedId, onPick }: { side: Side; selectedId: s
                   <span className="min-w-0">
                     <span className="block font-medium">{bilingual(s)}</span>
                     <span className="block text-sm text-muted">
-                      {s.team === "barber" &&
-                        `${t.service.aboutMin.replace("{n}", String(getDurationMinutes({ service: s, variant: s.variants[0] })))} · `}
+                      {s.team === "barber" && `${aboutMinutes(s)} · `}
                       <FromPrice service={s} />
                     </span>
                   </span>
@@ -437,10 +469,13 @@ function ServicePicker({ side, selectedId, onPick }: { side: Side; selectedId: s
   );
 }
 
-function StyleConfigurator(props: {
+export function StyleConfigurator(props: {
   service: Service;
   variantId: string | null;
   setVariantId: (id: string) => void;
+  /** Services with choice groups (Hair Color): one pick per group. */
+  picks: ChoicePicks;
+  onPick: (groupKey: string, label: string) => void;
   lengthLabel: string;
   setLengthLabel: (l: string) => void;
   addonIds: string[];
@@ -460,19 +495,50 @@ function StyleConfigurator(props: {
         </button>
       </div>
 
-      <fieldset>
-        <legend className="mb-3 font-medium">{t.book.chooseSize}</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {service.variants.map((v) => (
-            <button key={v.id} type="button" className={chip(v.id === variantId)} onClick={() => setVariantId(v.id)} aria-pressed={v.id === variantId}>
-              <span className="block font-medium">{v.label}</span>
-              <span className="block text-gold-text">
-                {v.priceCents != null ? formatCents(v.priceCents) : v.isConsult ? t.service.toDiscuss : t.service.askInSalon}
-              </span>
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      {service.choiceGroups.length ? (
+        // Hair Color: two required chip groups (kind, then colour) that resolve to one variant.
+        service.choiceGroups.map((g) => (
+          <fieldset key={g.key}>
+            <legend className="mb-3 font-medium">
+              {choiceGroupLegend(g.key)} <span aria-hidden>*</span>
+              <span className="sr-only"> ({t.book.required})</span>
+            </legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {g.options.map((o) => {
+                const on = props.picks[g.key] === o.label;
+                const fr = choiceLabel(o.label, "fr");
+                return (
+                  <button key={o.label} type="button" className={chip(on)} onClick={() => props.onPick(g.key, o.label)} aria-pressed={on}>
+                    <span className="block font-medium">{choiceLabel(o.label)}</span>
+                    {fr !== choiceLabel(o.label) && <span className="block text-xs text-muted">{fr}</span>}
+                    {o.priceCents != null && (
+                      <span className="block text-gold-text">
+                        {formatCents(o.priceCents)}
+                        {o.durationMinutes != null && <span className="text-xs text-muted"> · {o.durationMinutes} min</span>}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {g.key === "kind" && <p className="mt-2 text-sm text-muted">{t.book.cutInNotes}</p>}
+          </fieldset>
+        ))
+      ) : (
+        <fieldset>
+          <legend className="mb-3 font-medium">{t.book.chooseSize}</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {service.variants.map((v) => (
+              <button key={v.id} type="button" className={chip(v.id === variantId)} onClick={() => setVariantId(v.id)} aria-pressed={v.id === variantId}>
+                <span className="block font-medium">{v.label}</span>
+                <span className="block text-gold-text">
+                  {v.priceCents != null ? formatCents(v.priceCents) : v.isConsult ? t.service.toDiscuss : t.service.askInSalon}
+                </span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       {service.lengthBased && (
         <fieldset>
@@ -518,14 +584,50 @@ function StyleConfigurator(props: {
         </fieldset>
       )}
 
-      <button
-        type="button"
-        disabled={!variantId}
-        onClick={props.onContinue}
-        className="w-full rounded-full bg-ink py-3.5 font-semibold text-paper transition hover:bg-gold hover:text-onyx disabled:opacity-40"
-      >
-        {t.book.next}
-      </button>
+      <div>
+        <button
+          type="button"
+          disabled={!variantId}
+          onClick={props.onContinue}
+          className="w-full rounded-full bg-ink py-3.5 font-semibold text-paper transition hover:bg-gold hover:text-onyx disabled:opacity-40"
+        >
+          {t.book.next}
+        </button>
+        {service.choiceGroups.length > 0 && !variantId && (
+          <p className="mt-2 text-center text-sm text-muted">{t.book.pickBoth}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Pick a person": "Anyone available" + the people who do this service (its team, narrowed
+ * by only_staff: Hair Color = Noël only). A preselected person who does not do it shows as
+ * "Anyone available".
+ */
+export function StaffStep({ service, staffId, onPick }: { service: Service; staffId: string; onPick: (id: string) => void }) {
+  const people = staffChoicesFor(service);
+  const chosen = resolveStaffChoice(service, staffId);
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <PersonCard
+        selected={chosen === "any"}
+        onClick={() => onPick("any")}
+        title={t.book.anyone}
+        sub={t.book.anyoneSub}
+        avatar={<span className="grid h-14 w-14 place-items-center rounded-full bg-gold text-xl text-onyx">✦</span>}
+      />
+      {people.map((p) => (
+        <PersonCard
+          key={p.id}
+          selected={chosen === p.id}
+          onClick={() => onPick(p.id)}
+          title={p.name}
+          sub={p.team === "stylist" ? t.book.teamStylist : t.book.teamBarber}
+          avatar={<Avatar person={p} size={56} />}
+        />
+      ))}
     </div>
   );
 }

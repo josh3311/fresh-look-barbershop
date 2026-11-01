@@ -22,6 +22,17 @@ export interface Variant {
   isConsult: boolean;
   durationMinutes: number | null;
   sortOrder: number;
+  /**
+   * For a service with choice groups (Hair Color): the option picked in each group,
+   * e.g. { kind: "Color only", color: "White" }. null for ordinary sizes.
+   */
+  choices: Record<string, string> | null;
+}
+
+/** One required option group (Hair Color: "kind", then "color"). Every combination is one variant. */
+export interface ChoiceGroup {
+  key: string;
+  options: { label: string; priceCents: number | null; durationMinutes: number | null }[];
 }
 
 export interface Addon {
@@ -51,6 +62,16 @@ export interface Service {
   variants: Variant[];
   addons: Addon[];
   sortOrder: number;
+  /**
+   * Required option groups shown instead of the size picker (Hair Color: kind, then colour).
+   * Empty for every other service.
+   */
+  choiceGroups: ChoiceGroup[];
+  /**
+   * Staff keys (staff_demo "key", e.g. "barber-a") who do this service, inside its team.
+   * null = everyone on the team. Hair Color = ["barber-a"] (Noël only, Aubin Nov 1).
+   */
+  onlyStaffKeys: string[] | null;
 }
 
 export interface Category {
@@ -88,6 +109,15 @@ interface RawAddon {
   from?: boolean;
   consult?: boolean;
 }
+interface RawChoiceOption {
+  label: string;
+  price?: number | null;
+  duration_min?: number | null;
+}
+interface RawChoiceGroup {
+  key: string;
+  options: RawChoiceOption[];
+}
 interface RawService {
   name?: string;
   name_en?: string;
@@ -96,6 +126,9 @@ interface RawService {
   duration_min: number | null;
   variants?: RawVariant[];
   addons?: RawAddon[];
+  /** Staff keys (never names or emails). */
+  only_staff?: string[];
+  choices?: RawChoiceGroup[];
 }
 interface RawCategory {
   category_en: string;
@@ -112,10 +145,12 @@ function toTeam(value: string, where: string): Team {
 const toCents = (dollars: number | null | undefined) =>
   dollars == null ? null : Math.round(dollars * 100);
 
+// Men's tabs: Cuts · Braids, Twists & Locs · Hair Color.
 // Women's tabs follow the spec order: Braids · Twists · French Curls · Locs.
 const CATEGORY_ORDER: Record<string, number> = {
   "haircuts-beard": 1,
   "braids-twists-locs": 2,
+  "hair-color": 3,
   braids: 1,
   twists: 2,
   "french-curls": 3,
@@ -137,6 +172,21 @@ const NO_LENGTH = new Set([
   "short-boho-marley-twists",
 ]);
 
+/** Joins the options of one combination: "Color only · White". */
+export const CHOICE_SEPARATOR = " · ";
+
+/** Every combination of the groups' options, in order (first group varies slowest). */
+function combinations(groups: RawChoiceGroup[]): RawChoiceOption[][] {
+  return groups.reduce<RawChoiceOption[][]>(
+    (acc, g) => acc.flatMap((combo) => g.options.map((o) => [...combo, o])),
+    [[]],
+  );
+}
+
+/** Sum of the options' values; null when no option has one. */
+const sumOrNull = (values: (number | null | undefined)[]) =>
+  values.some((v) => v != null) ? values.reduce<number>((n, v) => n + (v ?? 0), 0) : null;
+
 function buildSide(side: Side, raw: RawCategory[]): Category[] {
   return raw
     .map((cat) => {
@@ -151,8 +201,32 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
           const nameFr = s.name_fr ?? nameEn;
           const slug = slugify(nameEn);
           const id = stableId(`service:${side}:${slug}`);
-          const isCut = s.price != null && !s.variants;
-          const variants: Variant[] = isCut
+          const isCut = s.price != null && !s.variants && !s.choices;
+          const choiceGroups: ChoiceGroup[] = (s.choices ?? []).map((g) => ({
+            key: g.key,
+            options: g.options.map((o) => ({
+              label: o.label,
+              priceCents: toCents(o.price),
+              durationMinutes: o.duration_min ?? null,
+            })),
+          }));
+          if (s.choices && s.variants) throw new Error(`services-seed.json: "${nameEn}" has both choices and variants`);
+          const variants: Variant[] = s.choices
+            ? // Hair Color: one variant per combination ("Color only · White"), with the summed
+              // price and minutes of its options (only the kind carries them).
+              combinations(s.choices).map((combo, vi) => {
+                const label = combo.map((o) => o.label).join(CHOICE_SEPARATOR);
+                return {
+                  id: stableId(`variant:${slug}:${slugify(label)}`),
+                  label,
+                  priceCents: toCents(sumOrNull(combo.map((o) => o.price))),
+                  isConsult: false,
+                  durationMinutes: sumOrNull(combo.map((o) => o.duration_min)),
+                  sortOrder: vi,
+                  choices: Object.fromEntries(s.choices!.map((g, gi) => [g.key, combo[gi].label])),
+                };
+              })
+            : isCut
             ? [
                 {
                   id: stableId(`variant:${slug}:standard`),
@@ -161,6 +235,7 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
                   isConsult: false,
                   durationMinutes: null,
                   sortOrder: 0,
+                  choices: null,
                 },
               ]
             : (s.variants ?? []).map((v, vi) => ({
@@ -171,6 +246,7 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
                 isConsult: !!v.consult && !v.note,
                 durationMinutes: null,
                 sortOrder: vi,
+                choices: null,
               }));
           const addons: Addon[] = (s.addons ?? []).map((a) => ({
             id: stableId(`addon:${slug}:${slugify(a.name)}`),
@@ -195,6 +271,8 @@ function buildSide(side: Side, raw: RawCategory[]): Category[] {
             variants,
             addons,
             sortOrder: i,
+            choiceGroups,
+            onlyStaffKeys: s.only_staff ? [...s.only_staff] : null,
           } satisfies Service;
         });
       return {
@@ -232,6 +310,16 @@ export const staff: StaffMember[] = (seed.staff_demo as { key?: string; name: st
   };
 });
 
+// only_staff must name real people (by key) on the service's own team: fail the build otherwise.
+for (const s of services) {
+  for (const key of s.onlyStaffKeys ?? []) {
+    const p = staff.find((x) => x.slug === key);
+    if (!p) throw new Error(`services-seed.json: "${s.nameEn}" only_staff "${key}" is not a staff_demo key`);
+    if (p.team !== s.team) throw new Error(`services-seed.json: "${s.nameEn}" only_staff "${key}" is not on team ${s.team}`);
+  }
+  if (s.onlyStaffKeys && !s.onlyStaffKeys.length) throw new Error(`services-seed.json: "${s.nameEn}" only_staff is empty`);
+}
+
 export const shop = {
   name: seed.shop.name,
   tagline: seed.shop.tagline_fr,
@@ -265,6 +353,21 @@ export function staffFor(side: Side) {
 /** The people who do a team's services ("Anyone available" picks only from these). */
 export function staffForTeam(team: Team) {
   return staff.filter((s) => s.team === team);
+}
+
+/**
+ * Staff ids allowed by the service's only_staff (Hair Color -> [Noël's id]); null = the whole team.
+ * Ids are stableId(`staff:${key}`), the same ids as in the database.
+ */
+export function onlyStaffIdsFor(service: Pick<Service, "onlyStaffKeys">): string[] | null {
+  if (!service.onlyStaffKeys) return null;
+  return staff.filter((p) => service.onlyStaffKeys!.includes(p.slug)).map((p) => p.id);
+}
+
+/** The people who do this service: its team, narrowed by only_staff. Display order. */
+export function staffForService(service: Pick<Service, "team" | "onlyStaffKeys">) {
+  const only = onlyStaffIdsFor(service);
+  return staffForTeam(service.team).filter((p) => !only || only.includes(p.id));
 }
 
 export function findService(id: string) {

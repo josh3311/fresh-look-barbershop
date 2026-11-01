@@ -18,16 +18,19 @@ If a rule here and your own idea disagree, the rule wins. If something is unclea
 ## Teams (Change Request #2)
 | Team | People | Services | Block | Start times |
 |---|---|---|---|---|
-| Barbers | Noël, Jackson, Joshua, Duckel | Classic Haircut, Haircut & Beard Trim, Kids, Beard, Outline | 35 / 45 / 30 / 15 / 15 min | every 5 min |
+| Barbers | Noël, Jackson, Joshua, Duckel | Classic Haircut, Haircut & Beard Trim, Kids, Beard, Outline; Hair Color (**Noël only**) | 35 / 45 / 30 / 15 / 15 min; Hair Color 30 (Color only) / 60 (Color + haircut) | every 5 min |
 | Stylists | Reine, Olga | every Braids / Twists / Locs / French Curls / Cornrows service, **both sides** | 60 min (Aubin confirmed) | on the hour |
 
 - "Anyone available" picks only from the service's team.
+- A service can be limited to some people of its team with `"only_staff": [<staff keys>]` in `data/services-seed.json` (keys like `barber-a`, never names or emails). Hair Color = Noël (`barber-a`) only: seed, stepper and `staff_services` follow it.
 - Roster from Aubin (Nov 1). Each person keeps a fixed seed `key` (barber-a … barber-f), so a rename never changes their database id. Real staff emails live in the database only, never in the repo.
 - Duration lives in one function: `getDurationMinutes`.
 
 ## Prices
 - Money in **cents**. Prices come from `data/services-seed.json`, never retyped.
 - Classic Haircut **$30**, Haircut & Beard Trim **$35**. Kids $25, Beard $20, Outline $20. No other price changes.
+- Hair Color (Nov 1): Color only **$50**, Color + haircut **$75** (any cut); colour required (White, Orange, Purple, Burgundy red). 8 sizes = kind x colour, no schema change.
+- Extensions add-on: **not added** until Aubin gives the price (TODO in `services-seed.json` flags and spec 12).
 - Extra length: +$15 per step past mid-back, women's long styles only (not Bob/Short styles, not men's).
 - "To discuss" / blank prices still book ("Price to discuss in the salon" / "Ask in salon").
 

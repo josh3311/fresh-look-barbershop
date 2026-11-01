@@ -11,7 +11,12 @@ import { SectionTitle } from "@/components/ui";
 export const metadata: Metadata = { title: "Men / Hommes" };
 
 export default function MenPage() {
-  const [cuts, styles] = categoriesFor("men");
+  // Tabs: Cuts · Braids, Twists & Locs · Hair Color (Aubin, Nov 1).
+  const men = categoriesFor("men");
+  const cat = (slug: string) => men.find((c) => c.slug === slug)!;
+  const cuts = cat("haircuts-beard");
+  const styles = cat("braids-twists-locs");
+  const color = cat("hair-color");
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
       <SectionTitle title={t.men.title} />
@@ -34,6 +39,17 @@ export default function MenPage() {
             content: (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {styles.services.map((s) => (
+                  <StyleCard key={s.id} service={s} />
+                ))}
+              </div>
+            ),
+          },
+          {
+            id: "color",
+            label: t.men.colorTab,
+            content: (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {color.services.map((s) => (
                   <StyleCard key={s.id} service={s} />
                 ))}
               </div>

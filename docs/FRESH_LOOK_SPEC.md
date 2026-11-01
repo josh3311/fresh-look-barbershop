@@ -32,8 +32,8 @@ Aubin showed a Square booking page as a sample (it splits services into sections
 | Currency | CAD |
 | Time zone | America/Toronto |
 | Staff (Nov 1) | 6 people: **Noël, Jackson, Joshua, Duckel** (Men page, **barbers**) and **Reine, Olga** (Women page, **hairstylists**). Real emails are in the database only. |
-| Teams (Oct 31) | **Barbers** do the 5 haircut services. **Stylists** do every braid / twist / loc / French curl / cornrow service, on **both** sides (see 6.4a). |
-| Men's services | 5 cuts (Classic Haircut **$30**, Haircut & Beard Trim **$35**, Kids $25, Beard $20, Outline $20) + 4 braid/twist/loc styles (see `services-seed.json`) |
+| Teams (Oct 31) | **Barbers** do the 5 haircut services and Hair Color (**Noël only**). **Stylists** do every braid / twist / loc / French curl / cornrow service, on **both** sides (see 6.4a). |
+| Men's services | 5 cuts (Classic Haircut **$30**, Haircut & Beard Trim **$35**, Kids $25, Beard $20, Outline $20) + 4 braid/twist/loc styles + **Hair Color / Coloration** (Nov 1: Color only **$50**, Color + haircut **$75**; see `services-seed.json`) |
 | Women's services | 33 styles from the Beaudy_By_Olga menus (see `services-seed.json`) |
 | Removed | Locs Installation (crossed out on the flyer — never add it) |
 
@@ -108,9 +108,10 @@ Think of the website like a house. The **Home** page is the front hall. From the
 
 ### 4.2 Men page `/men`
 1. Title: "Men / Hommes".
-2. Two tabs: **Cuts / Coupes** and **Braids, Twists & Locs / Tresses, Twists & Locs**.
+2. Three tabs: **Cuts / Coupes**, **Braids, Twists & Locs / Tresses, Twists & Locs** and **Hair Color / Coloration** (Nov 1).
 3. **Cuts** tab: service cards like the Square sample: name (English / French), time (e.g. "about 35 min"), price ("$30"), and a **Book** button. Classic Haircut ($30) goes first, with a gold "From $30" badge like the shop flyer.
 4. **Braids, Twists & Locs** tab: Simple Cornrows, Stitch Cornrows, Barrel Twists, Locs Re-twist. Same card style as the women's styles (photo, "from $X", tap to see the price table and add-ons).
+4b. **Hair Color** tab (Aubin, Nov 1): one card, **Hair Color / Coloration**, "from $50". Tap it: the price table lists the 2 kinds (**Color only $50**, **Color + haircut $75**) and the 4 colours (White, Orange, Purple, Burgundy red).
 5. Portfolio strip: men's haircut photos.
 6. Barbers: only staff whose side is `men` or `both`. (The page shows people by **side**; booking a braid / twist / loc service from this page still offers only the **stylists**, see 6.4a.)
 
@@ -143,10 +144,11 @@ Booking is like signing up for a slot on the school's swing.
 
 **Step 2 — Pick the service.**
 - Men: a list of cards (name, time, price, Select).
+- Men, **Hair Color**: two required chip groups, **kind** (Color only $50 · 30 min / Color + haircut $75 · 60 min) then **colour** (White / Blanc, Orange, Purple / Violet, Burgundy red / Rouge bordeaux). **Continue** stays disabled until both are picked. "Color + haircut" is any cut: the customer names it in the notes (no cut picker).
 - Women: pick the style, then pick the **size**, then pick the **length**, then tick any **add-ons**.
 - A small box at the bottom always shows: **"Estimated price: $X"**.
 
-**Step 3 — Pick the person.** Cards with photo and name. The first card is **"Anyone available"**. Only show people who do this service (the service's **team**: barbers for haircuts, stylists for every braid / twist / loc style, even from the Men side). "Anyone available" picks only from that team.
+**Step 3 — Pick the person.** Cards with photo and name. The first card is **"Anyone available"**. Only show people who do this service (the service's **team**: barbers for haircuts, stylists for every braid / twist / loc style, even from the Men side). "Anyone available" picks only from that team. **Hair Color: only "Anyone available" + Noël** (a preselected other barber falls back to "Anyone available").
 
 **Step 4 — Pick the day and time.**
 - A row of the next 14 days (scroll to see up to 60 days).
@@ -269,10 +271,13 @@ Change Request #2 (Aubin, Oct 31). The minutes live in `services-seed.json` (`du
 | Barber | Kids | 30 |
 | Barber | Beard | 15 |
 | Barber | Outline | 15 |
+| Barber | Hair Color: Color only (every colour) | 30 |
+| Barber | Hair Color: Color + haircut (every colour) | 60 |
 | Stylist | **Every** braid / twist / loc / French curl / cornrow service, every size, both sides | 60 |
 
 - This **replaces** the old 180 / 150 / 120 minute size rule.
 - ⚠️ Risk (flagged, not changed): a 2–3 hour style now blocks only 1 hour, so a stylist could be double-booked on a long style. Aubin knows his team; confirm with him (section 12).
+- Hair Color (Nov 1): each of its 8 sizes carries its own minutes (`service_variants.duration_minutes` 30 or 60, from the kind's `duration_min` in `services-seed.json`); `services.base_duration_minutes` = 30 (the shortest kind). `getDurationMinutes` = size minutes first, then service minutes. Start times every 5 min like every barber service.
 - Add-on `extra_minutes` default 0.
 - Keep the rule in **one function** (`getDurationMinutes`) so Aubin's real per-style times can replace it later (set `duration_min` per service or `duration_minutes` per size).
 
@@ -280,11 +285,12 @@ Change Request #2 (Aubin, Oct 31). The minutes live in `services-seed.json` (`du
 
 | Team | People | Services |
 |---|---|---|
-| `barber` | Noël, Jackson, Joshua, Duckel | Classic Haircut, Haircut & Beard Trim, Kids, Beard, Outline (5) |
+| `barber` | Noël, Jackson, Joshua, Duckel | Classic Haircut, Haircut & Beard Trim, Kids, Beard, Outline (5) + **Hair Color (Noël only)** |
 | `stylist` | Reine, Olga | every other service (37): the 4 men's "Braids, Twists & Locs" (Simple Cornrows, Stitch Cornrows, Barrel Twists, Locs Re-twist) **and** all 33 women's styles |
 
 - The team comes from the category's `team` in `services-seed.json` (catalog: `service.team`, `staff.team`, `staffForTeam(team)`).
-- `staff_services` = each person does **exactly** their team's services (2 × 5 + 2 × 37 = **84** rows). Never across teams.
+- `staff_services` = each person does **exactly** their team's services, except a service with `only_staff` (4 × 5 + 2 × 37 + Noël on Hair Color = **95** rows). Never across teams.
+- **Only one person (Nov 1):** a service in `services-seed.json` may carry `"only_staff": ["barber-a"]` (staff **keys**, never names or emails). Hair Color = Noël (`barber-a`) only: the catalog exposes it as `service.onlyStaffKeys`, the seed maps Hair Color to Noël only, the stepper shows only "Anyone available" + Noël, and the server books only people in `staff_services` (and on the team). Live data: `supabase/migrations/20261101180000_hair_color.sql` (copy with checks: `supabase/manual/hair_color.sql`); it also removes Hair Color from anyone else, so re-run it after any re-run of the CR2 or roster file.
 - `side` is unchanged: it only decides which page (Men / Women) shows a service or a person.
 - Live data is moved by the migration `supabase/migrations/20261031120000_cr2_teams_prices_durations.sql` (paste-ready copy with checks: `supabase/manual/cr2_teams_prices_durations.sql`).
 
@@ -406,6 +412,7 @@ If an image is missing, show a neutral `oak` box with the service name. Never br
 5. A "to discuss" option shows "Price to discuss in the salon" and still books. Knotless Large shows "Ask in salon".
 5b. Cornrows, Barrel Twists and Locs Re-twist appear on the **Men** page only. A Small knotless braid (60 min block) offers no slot that would end after closing (19:00 is the last start).
 5c. Simple Cornrows (Men page) offers only the stylists (Reine, Olga) + "Anyone available"; a Classic Haircut offers only the barbers (Noël, Jackson, Joshua, Duckel).
+5d. Hair Color (Men page, third tab) shows "from $50"; booking it needs a kind **and** a colour; Color only blocks 30 min ($50), Color + haircut 60 min ($75, last start 19:00); only "Anyone available" + Noël are offered, and "Anyone available" books Noël.
 6. A staff member cannot see another staff member's bookings. The owner can see all.
 7. Opening `/api/...` from the browser never leaks the bookings list.
 8. No page asks for a card or a deposit.
@@ -440,6 +447,14 @@ If an image is missing, show a neutral `oak` box with the service name. Never br
 | Teams | Barbers (Noël, Jackson, Joshua, Duckel) = 5 haircut services; stylists (Reine, Olga) (every braid / twist / loc service, both sides, incl. men's cornrows) |
 | Staff emails | New private `staff.email` column; placeholders until Aubin sends real ones (set in the database, never in the repo) |
 
+### Decisions made (Nov 1)
+
+| Question | Answer |
+|---|---|
+| Roster | Barbers Noël, Jackson, Joshua, Duckel; stylists Reine, Olga |
+| Hair Color | New men's service "Hair Color / Coloration", own category and tab. Color only $50 / 30 min, Color + haircut $75 / 60 min (any cut, named in the notes). Colour required: White, Orange, Purple, Burgundy red. **Noël only.** |
+| Extensions add-on | Price unknown ("ask Aubin"): not on the site yet (see 12) |
+
 ## 12. Still open (placeholders are fine for the demo)
 
 1. ~~Shop hours~~ Done: every day 10:00–20:00 (Oct 30).
@@ -449,3 +464,4 @@ If an image is missing, show a neutral `oak` box with the service name. Never br
 3. **Language**: French first, English first, or a switch?
 4. **Cancellation**: how late can a customer cancel online (e.g. up to 24h before)?
 5. Instagram / TikTok links.
+8. **Extensions add-on**: price from Aubin, then add to those 3 styles (Knotless Braids, Stitch Braids, Knotless Bones Straight Braids). Not in the data or the UI until then.

@@ -14,6 +14,7 @@ Every file is **safe to run twice**: the second run changes nothing. They never 
 | File | What it does |
 |---|---|
 | `cr2_teams_prices_durations.sql` | Change Request #2 (Oct 31): barber/stylist teams, Classic $30 and Haircut & Beard $35, 35/45/30/15/15 min barber blocks and 60 min stylist blocks, who does what (`staff_services`), private `staff.email` (placeholders), 5 / 60 min start-time settings. |
+| `hair_color.sql` | Hair Color (Nov 1): new men's barber service in its own "Hair Color / Coloration" category, 8 sizes (Color only $50 / 30 min, Color + haircut $75 / 60 min, x White, Orange, Purple, Burgundy red), done by **Noël only** (also removes Hair Color from anyone else, e.g. after a re-run of an older file). Run it after the roster file. |
 
 Staff emails: the files only put placeholders (`barber.a@example.invalid` ...). Set the real
 emails here in the SQL Editor, never in the repo (it is public), for example:
