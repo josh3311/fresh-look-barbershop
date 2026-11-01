@@ -80,18 +80,21 @@ describe("teams", () => {
     expect(services.filter((s) => s.side === "women").every((s) => s.team === "stylist")).toBe(true);
   });
 
-  it("T-107 staff teams: A, B barbers; C, D stylists; names and sides unchanged", () => {
+  // Roster (Nov 1): 4 barbers, 2 stylists (was Barber A, B / Barber C, D).
+  it("T-107 staff teams: Noël, Jackson, Joshua, Duckel barbers; Reine, Olga stylists", () => {
     expect(staff.map((p) => [p.name, p.side, p.team])).toEqual([
-      ["Barber A", "men", "barber"],
-      ["Barber B", "men", "barber"],
-      ["Barber C", "women", "stylist"],
-      ["Barber D", "women", "stylist"],
+      ["Noël", "men", "barber"],
+      ["Jackson", "men", "barber"],
+      ["Joshua", "men", "barber"],
+      ["Duckel", "men", "barber"],
+      ["Reine", "women", "stylist"],
+      ["Olga", "women", "stylist"],
     ]);
-    expect(staffForTeam("barber").map((p) => p.name)).toEqual(["Barber A", "Barber B"]);
-    expect(staffForTeam("stylist").map((p) => p.name)).toEqual(["Barber C", "Barber D"]);
+    expect(staffForTeam("barber").map((p) => p.name)).toEqual(["Noël", "Jackson", "Joshua", "Duckel"]);
+    expect(staffForTeam("stylist").map((p) => p.name)).toEqual(["Reine", "Olga"]);
     // staffFor(side) still drives the Men / Women pages.
-    expect(staffFor("men").map((p) => p.name)).toEqual(["Barber A", "Barber B"]);
-    expect(staffFor("women").map((p) => p.name)).toEqual(["Barber C", "Barber D"]);
+    expect(staffFor("men").map((p) => p.name)).toEqual(["Noël", "Jackson", "Joshua", "Duckel"]);
+    expect(staffFor("women").map((p) => p.name)).toEqual(["Reine", "Olga"]);
   });
 });
 
@@ -104,25 +107,35 @@ describe("A4 routing: staff_services from the seed", () => {
   const staffOf = (slug: string) =>
     rows.staff_services.filter((r) => slugOf.get(r.service_id) === slug).map((r) => nameOf.get(r.staff_id)!);
 
-  it("T-108 84 rows, no duplicates, no cross-team pair, each person exactly their team's services", () => {
-    expect(rows.staff_services).toHaveLength(84);
-    expect(new Set(rows.staff_services.map((r) => `${r.staff_id}:${r.service_id}`)).size).toBe(84);
+  // Roster (Nov 1): 4 barbers x 5 + 2 stylists x 37 = 94 (was 2 x 5 + 2 x 37 = 84).
+  it("T-108 94 rows, no duplicates, no cross-team pair, each person exactly their team's services", () => {
+    expect(rows.staff_services).toHaveLength(94);
+    expect(new Set(rows.staff_services.map((r) => `${r.staff_id}:${r.service_id}`)).size).toBe(94);
 
     const teamOfService = new Map(rows.services.map((s) => [s.id, s.team]));
     const teamOfStaff = new Map(rows.staff.map((p) => [p.id, p.team]));
     expect(rows.staff_services.filter((r) => teamOfService.get(r.service_id) !== teamOfStaff.get(r.staff_id))).toEqual([]);
 
     const stylistSlugs = services.filter((s) => s.team === "stylist").map((s) => s.slug).sort();
-    for (const name of ["Barber A", "Barber B"]) expect(servicesOf(name).sort(), name).toEqual([...BARBER_SLUGS].sort());
-    for (const name of ["Barber C", "Barber D"]) expect(servicesOf(name).sort(), name).toEqual(stylistSlugs);
+    for (const name of ["Noël", "Jackson", "Joshua", "Duckel"]) expect(servicesOf(name).sort(), name).toEqual([...BARBER_SLUGS].sort());
+    for (const name of ["Reine", "Olga"]) expect(servicesOf(name).sort(), name).toEqual(stylistSlugs);
 
-    expect(staffOf("simple-cornrows").sort()).toEqual(["Barber C", "Barber D"]);
-    expect(staffOf("classic-haircut").sort()).toEqual(["Barber A", "Barber B"]);
+    expect(staffOf("simple-cornrows").sort()).toEqual(["Olga", "Reine"]);
+    expect(staffOf("classic-haircut").sort()).toEqual(["Duckel", "Jackson", "Joshua", "Noël"]);
   });
 
   it("T-108 seed rows are stable: building twice gives identical rows (upserts never duplicate)", () => {
     expect(buildSeedRows()).toEqual(buildSeedRows());
-    expect(rows.staff.map((p) => p.id)).toEqual([byName("Barber A").id, byName("Barber B").id, byName("Barber C").id, byName("Barber D").id]);
+    expect(rows.staff.map((p) => p.id)).toEqual(
+      ["Noël", "Jackson", "Joshua", "Duckel", "Reine", "Olga"].map((n) => byName(n).id),
+    );
+    // Renaming keeps the database id: the original four keep the ids they had as Barber A-D.
+    expect(["Noël", "Jackson", "Reine", "Olga"].map((n) => byName(n).id)).toEqual([
+      "2f834e1c-72d7-5604-bd77-b724c9d21a3a",
+      "a55a3a35-2276-51c8-9712-b566ab96d744",
+      "c458bd2f-b0fa-5e66-91b2-ab5275a2541a",
+      "36b78c9f-4271-5678-8ed8-6b4a8a989fd4",
+    ]);
   });
 });
 
@@ -137,12 +150,14 @@ describe("A6 staff emails stay private", () => {
   it("T-109 seed emails are unique .invalid placeholders, never in browser-bound files", () => {
     const emails = buildSeedRows().staff.map((p) => p.email);
     expect(emails).toEqual([
-      "barber.a@example.invalid",
-      "barber.b@example.invalid",
-      "barber.c@example.invalid",
-      "barber.d@example.invalid",
+      "barber.a@example.invalid", // Noël
+      "barber.b@example.invalid", // Jackson
+      "barber.e@example.invalid", // Joshua
+      "barber.f@example.invalid", // Duckel
+      "barber.c@example.invalid", // Reine
+      "barber.d@example.invalid", // Olga
     ]);
-    expect(new Set(emails).size).toBe(4);
+    expect(new Set(emails).size).toBe(6);
     expect(emails.every((e) => e.endsWith(".invalid"))).toBe(true);
     expect(Object.values(PLACEHOLDER_STAFF_EMAILS).sort()).toEqual([...emails].sort());
 

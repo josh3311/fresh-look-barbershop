@@ -1314,8 +1314,8 @@
     "Large / XLarge Cornrows and Fulani = 2 to 4 strands."
   ],
   "flags": [
-    "Staff names stay Barber A-D until Aubin sends real names (do not rename). Real staff emails are set in the database only, never in this file (public repo).",
-    "Teams (Oct 31): Barber A, B = barbers (5 haircut services); Barber C, D = stylists (every braid/twist/loc/French curl/cornrow service, both sides). 'side' only says which page shows the person.",
+    "Roster (Nov 1): barbers Noël, Jackson, Joshua, Duckel; stylists Reine, Olga. 'key' keeps each person's database id stable when a name changes. Real staff emails are set in the database only, never in this file (public repo).",
+    "Teams: barbers do the haircut services; stylists do every braid/twist/loc/French curl/cornrow service, both sides. 'side' only says which page shows the person.",
     "Stylist 60 min block (Oct 31): a long style (2-3 h) still blocks only 1 hour. Aubin knows his team; confirm with him.",
     "Kids: keep 30 min and $25? (open item for Aubin)",
     "Knotless Braids Large price left blank on purpose.",
@@ -1330,25 +1330,11 @@
     "hours": "Mon-Sun 10:00-20:00 (confirmed Oct 30)"
   },
   "staff_demo": [
-    {
-      "name": "Barber A",
-      "side": "men",
-      "team": "barber"
-    },
-    {
-      "name": "Barber B",
-      "side": "men",
-      "team": "barber"
-    },
-    {
-      "name": "Barber C",
-      "side": "women",
-      "team": "stylist"
-    },
-    {
-      "name": "Barber D",
-      "side": "women",
-      "team": "stylist"
-    }
+    { "key": "barber-a", "name": "Noël", "side": "men", "team": "barber" },
+    { "key": "barber-b", "name": "Jackson", "side": "men", "team": "barber" },
+    { "key": "barber-e", "name": "Joshua", "side": "men", "team": "barber" },
+    { "key": "barber-f", "name": "Duckel", "side": "men", "team": "barber" },
+    { "key": "barber-c", "name": "Reine", "side": "women", "team": "stylist" },
+    { "key": "barber-d", "name": "Olga", "side": "women", "team": "stylist" }
   ]
 }

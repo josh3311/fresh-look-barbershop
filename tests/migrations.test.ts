@@ -6,6 +6,9 @@
 // staff_services by side, no team / email) + a booking. Then the CR2 migration must turn that
 // into exactly what the new seed describes, and a second run must change nothing.
 //
+// Then the roster migration (Nov 1: real names, 6 staff) must turn the CR2 state into exactly
+// what today's seed describes, again with a second run changing nothing.
+//
 // "Fresh" scenario: every migration on an empty database, then the new seed SQL twice.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -22,11 +25,16 @@ const MANUAL_FILE = join(__dirname, "../supabase/manual/cr2_teams_prices_duratio
 const migrationFiles = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort();
 const readMigration = (f: string) => readFileSync(join(MIGRATIONS_DIR, f), "utf8");
 const CR2_SQL = readMigration(CR2_FILE);
+const ROSTER_FILE = "20261101120000_roster.sql";
+const ROSTER_SQL = readMigration(ROSTER_FILE);
 
 const before = JSON.parse(readFileSync(join(__dirname, "fixtures/pre-cr2-seed-rows.json"), "utf8")) as SeedRows & {
   _read_me?: string;
 };
 delete before._read_me;
+/** The seed as it was right after CR2 (commit 621e40a: 4 staff, Barber A-D). */
+const cr2Rows = JSON.parse(readFileSync(join(__dirname, "fixtures/cr2-seed-rows.json"), "utf8")) as SeedRows;
+/** Today's seed (roster: 6 staff). */
 const after = buildSeedRows();
 
 const PUBLIC_TABLES = [
@@ -96,17 +104,73 @@ async function asRole<T>(db: PGlite, role: string, sql: string): Promise<{ rows?
   }
 }
 
+/**
+ * The SQL that `scripts/seed.ts --build` effectively runs: insert missing rows only
+ * ("on conflict do nothing") and hours only for people who have none yet.
+ */
+async function buildModeSql(db: PGlite, rows: SeedRows) {
+  const scheduled = new Set((await rowsOf<{ staff_id: string }>(db, "select distinct staff_id from public.working_hours")).map((r) => r.staff_id));
+  const filtered = { ...rows, working_hours: rows.working_hours.filter((r) => !scheduled.has(r.staff_id)) };
+  return toSql(filtered).replace(/on conflict \(([^)]+)\) do update set [^;]+;/g, "on conflict ($1) do nothing;");
+}
+
 const byId = <T extends { id: string }>(rows: T[]) => [...rows].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-/** The CR2 state the new seed describes, in DB terms. */
-const expected = {
-  services: after.services.map((s) => ({ id: s.id, team: s.team, base_duration_minutes: s.base_duration_minutes })),
-  variants: after.service_variants.map((v) => ({ id: v.id, price_cents: v.price_cents, duration_minutes: v.duration_minutes })),
-  staff: after.staff.map((p) => ({ id: p.id, name: p.name, side: p.side, team: p.team, email: p.email })),
-  staffServices: after.staff_services.map((r) => `${r.staff_id}:${r.service_id}`).sort(),
-};
+/** A seed's state in DB terms. */
+const expectedFrom = (rows: SeedRows) => ({
+  services: rows.services.map((s) => ({ id: s.id, team: s.team, base_duration_minutes: s.base_duration_minutes })),
+  variants: rows.service_variants.map((v) => ({ id: v.id, price_cents: v.price_cents, duration_minutes: v.duration_minutes })),
+  staff: rows.staff.map((p) => ({ id: p.id, name: p.name, side: p.side, team: p.team, email: p.email })),
+  staffServices: rows.staff_services.map((r) => `${r.staff_id}:${r.service_id}`).sort(),
+});
 
-async function assertCr2State(db: PGlite) {
+/** Hand-written answer key per stage (not derived from the code under test). */
+const CR2_KEY = {
+  rows: cr2Rows,
+  pairs: 84,
+  hours: 28,
+  perPerson: [
+    { name: "Barber A", n: 5, same_team: true },
+    { name: "Barber B", n: 5, same_team: true },
+    { name: "Barber C", n: 37, same_team: true },
+    { name: "Barber D", n: 37, same_team: true },
+  ],
+  cornrows: ["Barber C", "Barber D"],
+  classic: ["Barber A", "Barber B"],
+  publicStaff: [
+    { name: "Barber A", team: "barber" },
+    { name: "Barber B", team: "barber" },
+    { name: "Barber C", team: "stylist" },
+    { name: "Barber D", team: "stylist" },
+  ],
+};
+const ROSTER_KEY = {
+  rows: after,
+  pairs: 94, // 4 barbers x 5 + 2 stylists x 37
+  hours: 42, // 6 people x 7 days
+  perPerson: [
+    { name: "Duckel", n: 5, same_team: true },
+    { name: "Jackson", n: 5, same_team: true },
+    { name: "Joshua", n: 5, same_team: true },
+    { name: "Noël", n: 5, same_team: true },
+    { name: "Olga", n: 37, same_team: true },
+    { name: "Reine", n: 37, same_team: true },
+  ],
+  cornrows: ["Olga", "Reine"],
+  classic: ["Duckel", "Jackson", "Joshua", "Noël"],
+  publicStaff: [
+    { name: "Noël", team: "barber" },
+    { name: "Jackson", team: "barber" },
+    { name: "Joshua", team: "barber" },
+    { name: "Duckel", team: "barber" },
+    { name: "Reine", team: "stylist" },
+    { name: "Olga", team: "stylist" },
+  ],
+};
+type StageKey = typeof CR2_KEY;
+
+async function assertCr2State(db: PGlite, key: StageKey = CR2_KEY) {
+  const expected = expectedFrom(key.rows);
   // Prices (T-101 / T-102) and every other price unchanged (T-103).
   const prices = await rowsOf<{ slug: string; price_cents: number }>(
     db,
@@ -148,31 +212,35 @@ async function assertCr2State(db: PGlite) {
   // Routing (T-108): exactly the new seed's 84 pairs, nothing cross-team.
   const pairs = await rowsOf<{ k: string }>(db, "select staff_id || ':' || service_id as k from public.staff_services");
   expect(pairs.map((p) => p.k).sort()).toEqual(expected.staffServices);
-  expect(pairs).toHaveLength(84);
+  expect(pairs).toHaveLength(key.pairs);
   const perPerson = await rowsOf(
     db,
     `select st.name, count(*)::int as n, bool_and(st.team = sv.team) as same_team
      from public.staff_services ss join public.staff st on st.id = ss.staff_id join public.services sv on sv.id = ss.service_id
      group by st.name order by st.name`,
   );
-  expect(perPerson).toEqual([
-    { name: "Barber A", n: 5, same_team: true },
-    { name: "Barber B", n: 5, same_team: true },
-    { name: "Barber C", n: 37, same_team: true },
-    { name: "Barber D", n: 37, same_team: true },
-  ]);
+  expect(perPerson).toEqual(key.perPerson);
   const cornrows = await rowsOf<{ name: string }>(
     db,
     `select st.name from public.staff_services ss join public.staff st on st.id = ss.staff_id
      join public.services sv on sv.id = ss.service_id where sv.slug = 'simple-cornrows' order by st.name`,
   );
-  expect(cornrows.map((r) => r.name)).toEqual(["Barber C", "Barber D"]);
+  expect(cornrows.map((r) => r.name)).toEqual(key.cornrows);
   const classic = await rowsOf<{ name: string }>(
     db,
     `select st.name from public.staff_services ss join public.staff st on st.id = ss.staff_id
      join public.services sv on sv.id = ss.service_id where sv.slug = 'classic-haircut' order by st.name`,
   );
-  expect(classic.map((r) => r.name)).toEqual(["Barber A", "Barber B"]);
+  expect(classic.map((r) => r.name)).toEqual(key.classic);
+
+  // Hours: every person, every day, 10:00-20:00, no duplicates.
+  expect(
+    await rowsOf(
+      db,
+      `select count(*)::int as n, count(distinct (staff_id, weekday))::int as pairs,
+         bool_and(start_time = '10:00' and end_time = '20:00') as all_10_to_20 from public.working_hours`,
+    ),
+  ).toEqual([{ n: key.hours, pairs: key.hours, all_10_to_20: true }]);
 
   // Settings (T-110).
   expect(await rowsOf(db, "select slot_interval_minutes, barber_slot_minutes, stylist_slot_minutes from public.settings")).toEqual([
@@ -180,7 +248,8 @@ async function assertCr2State(db: PGlite) {
   ]);
 }
 
-async function assertStaffPrivacy(db: PGlite) {
+async function assertStaffPrivacy(db: PGlite, key: StageKey = CR2_KEY) {
+  const expected = expectedFrom(key.rows);
   const email = await asRole(db, "anon", "select email from public.staff");
   expect(email.error).toMatch(/permission denied/);
   const star = await asRole(db, "anon", "select * from public.staff");
@@ -190,15 +259,10 @@ async function assertStaffPrivacy(db: PGlite) {
 
   const pub = await asRole<{ name: string; team: string }>(db, "anon", "select name, team from public.staff order by sort_order");
   expect(pub.error).toBeUndefined();
-  expect(pub.rows).toEqual([
-    { name: "Barber A", team: "barber" },
-    { name: "Barber B", team: "barber" },
-    { name: "Barber C", team: "stylist" },
-    { name: "Barber D", team: "stylist" },
-  ]);
+  expect(pub.rows).toEqual(key.publicStaff);
   const signedIn = await asRole(db, "authenticated", "select id, name, photo_url, bio, side, role, is_active, sort_order, team from public.staff");
   expect(signedIn.error).toBeUndefined();
-  expect(signedIn.rows).toHaveLength(4);
+  expect(signedIn.rows).toHaveLength(key.publicStaff.length);
   // The server (service role) still reads emails.
   const server = await asRole<{ email: string }>(db, "service_role", "select email from public.staff order by sort_order");
   expect(server.error).toBeUndefined();
@@ -285,10 +349,34 @@ describe("T-111 CR2 migration on the live (pre-CR2) state", () => {
     await assertStaffPrivacy(db);
   });
 
-  it("the seed (as the build runs it) adds nothing after the migration: already in sync", async () => {
-    // --build only inserts missing rows; emulate it with "on conflict do nothing".
-    const sql = toSql(after).replace(/on conflict \(([^)]+)\) do update set [^;]+;/g, "on conflict ($1) do nothing;");
-    const { affected } = await execCounting(db, sql);
+  it("the seed of that time (as the build runs it) adds nothing after the migration: already in sync", async () => {
+    const { affected } = await execCounting(db, await buildModeSql(db, cr2Rows));
+    expect(affected).toBe(0);
+  });
+
+  it("roster migration: CR2 state -> exactly today's seed (6 staff, 42 hours, 94 pairs); the booking is untouched", async () => {
+    const bookingBefore = await rowsOf(db, "select xmin::text, to_jsonb(b) as row from public.bookings b");
+    const { affected } = await execCounting(db, ROSTER_SQL);
+    expect(affected).toBeGreaterThan(0);
+    await assertCr2State(db, ROSTER_KEY);
+    await assertStaffPrivacy(db, ROSTER_KEY);
+    expect(await rowsOf(db, "select xmin::text, to_jsonb(b) as row from public.bookings b")).toEqual(bookingBefore);
+    // The booking still belongs to the same person, now called Noël.
+    expect(await rowsOf(db, "select st.name from public.bookings b join public.staff st on st.id = b.staff_id")).toEqual([
+      { name: "Noël" },
+    ]);
+  });
+
+  it("roster migration second run changes 0 rows", async () => {
+    const snap = await snapshot(db);
+    const { results, affected } = await execCounting(db, ROSTER_SQL);
+    expect(results.map((r) => r.affectedRows ?? 0).filter((n) => n !== 0)).toEqual([]);
+    expect(affected).toBe(0);
+    expect(await snapshot(db)).toEqual(snap);
+  });
+
+  it("today's seed (as the build runs it) adds nothing after the roster migration", async () => {
+    const { affected } = await execCounting(db, await buildModeSql(db, after));
     expect(affected).toBe(0);
   });
 });
@@ -335,10 +423,10 @@ describe("T-111 fresh database: every migration, then the new seed", () => {
     for (const f of migrationFiles) await db.exec(readMigration(f));
   });
 
-  it("the new seed loads (team constraints accept it) and gives the CR2 state", async () => {
+  it("today's seed loads (team constraints accept it) and gives the roster state", async () => {
     await db.exec(toSql(after));
-    await assertCr2State(db);
-    await assertStaffPrivacy(db);
+    await assertCr2State(db, ROSTER_KEY);
+    await assertStaffPrivacy(db, ROSTER_KEY);
   });
 
   it("re-seeding creates no duplicates and never overwrites a real staff email", async () => {
@@ -348,28 +436,30 @@ describe("T-111 fresh database: every migration, then the new seed", () => {
           PUBLIC_TABLES.map(async (t) => [t, (await rowsOf<{ n: number }>(db, `select count(*)::int as n from public.${t}`))[0].n]),
         ),
       );
-    const barberA = after.staff.find((p) => p.name === "Barber A")!.id;
+    const barberA = after.staff.find((p) => p.name === "Noël")!.id;
     await db.query("update public.staff set email = 'real.person@example.test' where id = $1", [barberA]);
     const before = await counts();
     await db.exec(toSql(after));
     await db.exec(toSql(after));
     expect(await counts()).toEqual(before);
-    expect(before.staff_services).toBe(84);
+    expect(before.staff_services).toBe(94);
+    expect(before.working_hours).toBe(42);
+    expect(before.staff).toBe(6);
     expect(await rowsOf(db, `select email from public.staff where id = '${barberA}'`)).toEqual([{ email: "real.person@example.test" }]);
     await db.query("update public.staff set email = null where id = $1", [barberA]);
     await db.exec(toSql(after));
     expect(await rowsOf(db, `select email from public.staff where id = '${barberA}'`)).toEqual([{ email: "barber.a@example.invalid" }]);
   });
 
-  it("running the CR2 migration again on the seeded database changes 0 rows", async () => {
+  it("running the CR2 and roster migrations again on the seeded database changes 0 rows", async () => {
     const snap = await snapshot(db);
-    const { affected } = await execCounting(db, CR2_SQL);
-    expect(affected).toBe(0);
+    expect((await execCounting(db, CR2_SQL)).affected).toBe(0);
+    expect((await execCounting(db, ROSTER_SQL)).affected).toBe(0);
     expect(await snapshot(db)).toEqual(snap);
   });
 
   it("a team outside barber/stylist is refused", async () => {
     await expect(db.exec("update public.services set team = 'nobody' where slug = 'kids'")).rejects.toThrow(/services_team_check/);
-    await expect(db.exec("update public.staff set team = null where name = 'Barber A'")).rejects.toThrow(/null/);
+    await expect(db.exec("update public.staff set team = null where name = 'Noël'")).rejects.toThrow(/null/);
   });
 });

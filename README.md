@@ -70,7 +70,7 @@ barber/stylist (or whoever "Anyone available" assigned). The staff address is re
   Resend → Domains → Add domain → add the DNS records → then set `RESEND_FROM`.
 - Staff emails are placeholders (`barber.a@example.invalid` ...) until Aubin sends the real ones. Any `.invalid`
   address is skipped without calling Resend. Set real ones **in the database only** (never in this repo):
-  Supabase SQL Editor → `update public.staff set email = 'name@domain' where name = 'Barber A';`
+  Supabase SQL Editor → `update public.staff set email = 'name@domain' where name = 'Noël';`
 
 ## Staff login (Supabase Auth)
 

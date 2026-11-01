@@ -19,5 +19,5 @@ Staff emails: the files only put placeholders (`barber.a@example.invalid` ...). 
 emails here in the SQL Editor, never in the repo (it is public), for example:
 
 ```sql
-update public.staff set email = 'real.person@example.com' where name = 'Barber A';
+update public.staff set email = 'real.person@example.com' where name = 'Noël';
 ```

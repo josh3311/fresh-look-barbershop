@@ -53,7 +53,7 @@ function summary(over: Partial<BookingSummary> = {}): BookingSummary {
     variantLabel: null,
     lengthLabel: null,
     addons: [],
-    staffName: "Barber A",
+    staffName: "Noël",
     staffEmail: STAFF_A_EMAIL,
     startsAt: new Date("2026-10-31T18:00:00.000Z"), // Sat Oct 31, 2:00 PM in Ottawa (EDT)
     estimate: { cents: 3000, isFrom: false, hasConsult: false, askInSalon: false },
@@ -66,8 +66,8 @@ function summary(over: Partial<BookingSummary> = {}): BookingSummary {
 function tablesWithTestEmails(): FakeTables {
   const tables = seedTables();
   for (const p of tables.staff) {
-    if (p.name === "Barber A") p.email = STAFF_A_EMAIL;
-    if (p.name === "Barber C") p.email = STAFF_C_EMAIL;
+    if (p.name === "Noël") p.email = STAFF_A_EMAIL;
+    if (p.name === "Reine") p.email = STAFF_C_EMAIL;
   }
   return tables;
 }
@@ -99,7 +99,7 @@ describe("CR2 A6 emails", () => {
     const [mail] = sentTo("test-customer@example.com");
     expect(mail).toBeDefined();
     expect(mail.to).toEqual(["test-customer@example.com"]);
-    for (const s of ["Classic Haircut", "Barber A", "Sat Oct 31", "2:00 PM", "$30", "478 Rideau St, Ottawa, ON K1N 5Z4", "Pay in salon", "No deposit"]) {
+    for (const s of ["Classic Haircut", "Noël", "Sat Oct 31", "2:00 PM", "$30", "478 Rideau St, Ottawa, ON K1N 5Z4", "Pay in salon", "No deposit"]) {
       expect(mail.text).toContain(s);
     }
     expect(mail.text).not.toMatch(/card/i);
@@ -121,7 +121,7 @@ describe("CR2 A6 emails", () => {
     expect(mail.subject).toBe("New booking: Knotless Braids on Sat Oct 31, 2:00 PM");
   });
 
-  it("T-303 'Anyone available' for a stylist service assigns Barber C and emails Barber C", async () => {
+  it("T-303 'Anyone available' for a stylist service assigns Reine and emails Reine", async () => {
     okFetch();
     const { db, inserted } = fakeSupabase(tablesWithTestEmails());
     const cornrows = svc("simple-cornrows");
@@ -133,13 +133,13 @@ describe("CR2 A6 emails", () => {
       ...customer,
     });
     expect(res.status).toBe(201);
-    expect(inserted[0].row.staff_id).toBe(person("Barber C").id);
+    expect(inserted[0].row.staff_id).toBe(person("Reine").id);
     const mails = sentTo(STAFF_C_EMAIL);
     expect(mails).toHaveLength(1);
     expect(mails[0].text).toContain("Simple Cornrows");
     expect(mails[0].subject).toContain("Fri Nov 6, 10:00 AM");
     expect(sentTo(STAFF_A_EMAIL)).toHaveLength(0);
-    expect(calls).toHaveLength(3); // salon + customer + Barber C
+    expect(calls).toHaveLength(3); // salon + customer + Reine
   });
 
   it("T-304 a .invalid staff address is never sent to Resend; salon + customer still go out; log has id, not the address", async () => {
@@ -149,7 +149,7 @@ describe("CR2 A6 emails", () => {
     const res = await createBooking(db, {
       serviceId: classic.id,
       variantId: classic.variants[0].id,
-      staffId: person("Barber A").id,
+      staffId: person("Noël").id,
       startsAt: FRIDAY_10AM,
       ...customer,
     });
@@ -176,7 +176,7 @@ describe("CR2 A6 emails", () => {
     await sendBookingEmails(summary());
     const [salon] = sentTo("freshlook.Ottawa@gmail.com");
     expect(salon).toBeDefined();
-    for (const s of ["TEST-Customer Name", "(613) 555-0199", "test-customer@example.com", "Classic Haircut", "Barber A", "$30", BOOKING_ID]) {
+    for (const s of ["TEST-Customer Name", "(613) 555-0199", "test-customer@example.com", "Classic Haircut", "Noël", "$30", BOOKING_ID]) {
       expect(salon.text).toContain(s);
     }
   });
@@ -202,7 +202,7 @@ describe("CR2 A6 emails", () => {
     const res = await createBooking(db, {
       serviceId: classic.id,
       variantId: classic.variants[0].id,
-      staffId: person("Barber A").id,
+      staffId: person("Noël").id,
       startsAt: FRIDAY_10AM,
       ...customer,
     });
@@ -248,7 +248,7 @@ describe("CR2 A6 emails", () => {
     const res = await createBooking(failing, {
       serviceId: classic.id,
       variantId: classic.variants[0].id,
-      staffId: person("Barber A").id,
+      staffId: person("Noël").id,
       startsAt: FRIDAY_10AM,
       ...customer,
     });
@@ -270,7 +270,7 @@ describe("CR2 A6 emails", () => {
     const res = await createBooking(throwing, {
       serviceId: classic.id,
       variantId: classic.variants[0].id,
-      staffId: person("Barber A").id,
+      staffId: person("Noël").id,
       startsAt: FRIDAY_10AM,
       ...customer,
     });

@@ -105,10 +105,10 @@ describe("opening hours (change request #1)", () => {
     expect(OPENING_HOURS.every((h) => h.start === "10:00" && h.end === "20:00")).toBe(true);
   });
 
-  it("seed gives each of the 4 staff 7 rows (28), no duplicates", () => {
+  it("seed gives each of the 6 staff 7 rows (42), no duplicates", () => {
     const rows = buildSeedRows().working_hours;
-    expect(rows).toHaveLength(28);
-    expect(new Set(rows.map((r) => `${r.staff_id}:${r.weekday}`)).size).toBe(28);
+    expect(rows).toHaveLength(42);
+    expect(new Set(rows.map((r) => `${r.staff_id}:${r.weekday}`)).size).toBe(42);
   });
 
   it("address has no unit number", () => {

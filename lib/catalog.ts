@@ -218,8 +218,9 @@ export const categories: Category[] = [
 
 export const services: Service[] = categories.flatMap((c) => c.services);
 
-export const staff: StaffMember[] = seed.staff_demo.map((s, i) => {
-  const slug = slugify(s.name);
+// `key` (not the name) makes the id, so renaming someone never creates a new person.
+export const staff: StaffMember[] = (seed.staff_demo as { key?: string; name: string; side: string; team: string }[]).map((s, i) => {
+  const slug = s.key ?? slugify(s.name);
   return {
     id: stableId(`staff:${slug}`),
     slug,

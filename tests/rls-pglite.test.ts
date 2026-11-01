@@ -90,6 +90,6 @@ describe("T-309 RLS on real Postgres (all migrations)", () => {
     expect((await as(db, "anon", "select email from public.staff")).error).toMatch(/permission denied/);
     const pub = await as<{ name: string }>(db, "anon", "select name from public.staff order by sort_order");
     expect(pub.error).toBeUndefined();
-    expect(pub.rows!.map((r) => r.name)).toEqual(["Barber A", "Barber B", "Barber C", "Barber D"]);
+    expect(pub.rows!.map((r) => r.name)).toEqual(["Noël", "Jackson", "Joshua", "Duckel", "Reine", "Olga"]);
   });
 });

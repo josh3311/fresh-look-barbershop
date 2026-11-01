@@ -77,7 +77,7 @@ describe("A2 barber start times (every 5 min)", () => {
     expect([...steps]).toEqual([5]);
   });
 
-  it("T-204 Barber A busy 10:00-10:35 (Classic): first start 10:35, 10:30 not offered", () => {
+  it("T-204 Noël busy 10:00-10:35 (Classic): first start 10:35, 10:30 not offered", () => {
     const s = labels(starts(svc("classic-haircut"), { busy: [{ start: at("10:00"), end: at("10:35") }] }));
     expect(s[0]).toBe("10:35");
     expect(s).not.toContain("10:30");
@@ -151,30 +151,30 @@ describe("A4 who can do this service", () => {
   it("T-211 staff choices: Simple Cornrows (Men side) -> C, D; Classic -> A, B; Knotless -> C, D", () => {
     const names = (slug: string) => staffChoicesFor(svc(slug)).map((p) => p.name);
     expect(svc("simple-cornrows").side).toBe("men");
-    expect(names("simple-cornrows")).toEqual(["Barber C", "Barber D"]);
-    expect(names("classic-haircut")).toEqual(["Barber A", "Barber B"]);
-    expect(names("knotless-braids")).toEqual(["Barber C", "Barber D"]);
+    expect(names("simple-cornrows")).toEqual(["Reine", "Olga"]);
+    expect(names("classic-haircut")).toEqual(["Noël", "Jackson", "Joshua", "Duckel"]);
+    expect(names("knotless-braids")).toEqual(["Reine", "Olga"]);
   });
 
   it("a preselected person from the other team falls back to Anyone available", () => {
-    expect(resolveStaffChoice(svc("simple-cornrows"), person("Barber A").id)).toBe("any");
-    expect(resolveStaffChoice(svc("simple-cornrows"), person("Barber C").id)).toBe(person("Barber C").id);
-    expect(resolveStaffChoice(svc("classic-haircut"), person("Barber D").id)).toBe("any");
+    expect(resolveStaffChoice(svc("simple-cornrows"), person("Noël").id)).toBe("any");
+    expect(resolveStaffChoice(svc("simple-cornrows"), person("Reine").id)).toBe(person("Reine").id);
+    expect(resolveStaffChoice(svc("classic-haircut"), person("Olga").id)).toBe("any");
     expect(resolveStaffChoice(svc("classic-haircut"), "any")).toBe("any");
   });
 
-  it("T-212 server: Barber A for Simple Cornrows -> 400; a wrong staff_services row for A -> 'any' still gives only C, D", async () => {
+  it("T-212 server: Noël for Simple Cornrows -> 400; a wrong staff_services row for A -> 'any' still gives only C, D", async () => {
     const cornrows = { id: svc("simple-cornrows").id, team: "stylist" as const };
     const tables = seedTables();
     const { db } = fakeSupabase(tables);
-    const err = await loadEligibleStaff(db, cornrows, person("Barber A").id).catch((e: unknown) => e);
+    const err = await loadEligibleStaff(db, cornrows, person("Noël").id).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(HttpError);
     expect((err as HttpError).status).toBe(400);
 
-    const barberA = tables.staff.find((p) => p.name === "Barber A")!;
+    const barberA = tables.staff.find((p) => p.name === "Noël")!;
     tables.staff_services.push({ staff_id: barberA.id, service_id: cornrows.id, staff: barberA }); // the old bug
     const anyone = await loadEligibleStaff(fakeSupabase(tables).db, cornrows, "any");
-    expect(anyone.map((p) => p.name)).toEqual(["Barber C", "Barber D"]);
+    expect(anyone.map((p) => p.name)).toEqual(["Reine", "Olga"]);
   });
 
   it("server reads team + both slot settings from the rows: Classic every 5 min, a braid on the hour", async () => {
@@ -191,8 +191,8 @@ describe("A4 who can do this service", () => {
     expect([knotless.team, knotless.durationMinutes]).toEqual(["stylist", 60]);
 
     // Example A (barber) and Example B (stylist), through the database rows.
-    const a = person("Barber A").id;
-    const c = person("Barber C").id;
+    const a = person("Noël").id;
+    const c = person("Reine").id;
     tables.bookings.push(
       { staff_id: a, status: "booked", starts_at: at("10:00").toISOString(), ends_at: at("10:35").toISOString() },
       { staff_id: c, status: "booked", starts_at: at("10:00").toISOString(), ends_at: at("11:00").toISOString() },
@@ -205,8 +205,8 @@ describe("A4 who can do this service", () => {
 });
 
 describe("A5 not working this day", () => {
-  const c = person("Barber C").id;
-  const d = person("Barber D").id;
+  const c = person("Reine").id;
+  const d = person("Olga").id;
   const friday = 5;
   const withoutFriday = (...ids: string[]) => {
     const tables = seedTables();

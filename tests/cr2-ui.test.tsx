@@ -70,12 +70,12 @@ describe("A2 time estimate on barber cut cards only", () => {
 });
 
 describe("A4 staff step shows the service's team only", () => {
-  it("Classic: Anyone available + Barber A, B; never C or D; a preselected stylist falls back to Anyone", () => {
+  it("Classic: Anyone available + the 4 barbers; never a stylist; a preselected stylist falls back to Anyone", () => {
     const html = renderToStaticMarkup(
-      <BookingStepper initialSide="men" initialServiceId={svc("classic-haircut").id} initialStaffId={person("Barber C").id} />,
+      <BookingStepper initialSide="men" initialServiceId={svc("classic-haircut").id} initialStaffId={person("Reine").id} />,
     );
     const cards = [...html.matchAll(/<span class="block font-serif text-lg">([^<]+)<\/span>/g)].map((m) => m[1]);
-    expect(cards).toEqual(["Anyone available", "Barber A", "Barber B"]);
+    expect(cards).toEqual(["Anyone available", "Noël", "Jackson", "Joshua", "Duckel"]);
     // The selected card is "Anyone available".
     expect(html).toMatch(/<button[^>]*aria-pressed="true"[^>]*>[\s\S]*?Anyone available/);
   });

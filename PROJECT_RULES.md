@@ -18,11 +18,11 @@ If a rule here and your own idea disagree, the rule wins. If something is unclea
 ## Teams (Change Request #2)
 | Team | People | Services | Block | Start times |
 |---|---|---|---|---|
-| Barbers | Barber A, Barber B | Classic Haircut, Haircut & Beard Trim, Kids, Beard, Outline | 35 / 45 / 30 / 15 / 15 min | every 5 min |
-| Stylists | Barber C, Barber D | every Braids / Twists / Locs / French Curls / Cornrows service, **both sides** | 60 min (Aubin confirmed) | on the hour |
+| Barbers | Noël, Jackson, Joshua, Duckel | Classic Haircut, Haircut & Beard Trim, Kids, Beard, Outline | 35 / 45 / 30 / 15 / 15 min | every 5 min |
+| Stylists | Reine, Olga | every Braids / Twists / Locs / French Curls / Cornrows service, **both sides** | 60 min (Aubin confirmed) | on the hour |
 
 - "Anyone available" picks only from the service's team.
-- Names stay **Barber A, B, C, D** until Aubin sends real names (do not rename).
+- Roster from Aubin (Nov 1). Each person keeps a fixed seed `key` (barber-a … barber-f), so a rename never changes their database id. Real staff emails live in the database only, never in the repo.
 - Duration lives in one function: `getDurationMinutes`.
 
 ## Prices

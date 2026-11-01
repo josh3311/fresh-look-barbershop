@@ -20,6 +20,8 @@ export const PLACEHOLDER_STAFF_EMAILS: Record<string, string> = {
   "barber-b": "barber.b@example.invalid",
   "barber-c": "barber.c@example.invalid",
   "barber-d": "barber.d@example.invalid",
+  "barber-e": "barber.e@example.invalid",
+  "barber-f": "barber.f@example.invalid",
 };
 
 function placeholderEmail(slug: string): string {
